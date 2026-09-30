@@ -1,0 +1,50 @@
+{
+  "recommendations": [
+    {
+      "case": "uncollected",
+      "action": "hold",
+      "reason": "uncollected"
+    },
+    {
+      "case": "measured-zero",
+      "action": "revise",
+      "reason": "below_threshold"
+    },
+    {
+      "case": "wrong-period",
+      "action": "hold",
+      "reason": "period_mismatch"
+    },
+    {
+      "case": "meets-threshold",
+      "action": "maintain",
+      "reason": "threshold_met"
+    }
+  ],
+  "recovery": {
+    "after_failure": {
+      "completed": [
+        "check"
+      ],
+      "status": "failed"
+    },
+    "retry": "done",
+    "replay": "skipped",
+    "final": {
+      "completed": [
+        "check",
+        "prepare",
+        "record"
+      ],
+      "status": "done"
+    },
+    "expired": "approval_expired"
+  },
+  "csv": [
+    {
+      "id": "synthetic-example",
+      "management_balance": 180000,
+      "deposit_difference": 20000
+    }
+  ]
+}

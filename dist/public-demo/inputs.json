@@ -1,0 +1,1 @@
+[{"case":"uncollected","value":null,"observed":false,"period":"2026-09"},{"case":"measured-zero","value":0,"observed":true,"period":"2026-09"},{"case":"wrong-period","value":120,"observed":true,"period":"2026-08"},{"case":"meets-threshold","value":120,"observed":true,"period":"2026-09"}]
