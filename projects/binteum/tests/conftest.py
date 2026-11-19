@@ -12,6 +12,14 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 
+@pytest.fixture(autouse=True)
+def _hub_data_keys(monkeypatch):
+    """공개 저장소에는 허브 데이터키 값이 없다(환경변수로 주입). 테스트는 더미 키를 쓴다."""
+    from binteum import config
+    if not config.DATASET_DATA_KEYS.get("flow"):
+        monkeypatch.setitem(config.DATASET_DATA_KEYS, "flow", "TEST_FLOW_KEY")
+
+
 @pytest.fixture()
 def tmp_out(tmp_path, monkeypatch):
     """실행 산출물을 임시 폴더로 돌린다(저장소 오염 방지)."""
