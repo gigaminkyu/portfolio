@@ -1,0 +1,5 @@
+# 개발·검증용 (평가 실행에는 불필요)
+pytest>=7.0
+# 기획서 PDF 재생성용 (tools/build_pdf.py 에서만 사용)
+markdown>=3.5
+weasyprint>=60

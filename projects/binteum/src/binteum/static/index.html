@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>빈틈(BinTeum) — 제주 여행의 빈 시간을 찾아주는 혼잡 회피 Agent</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">빈틈</span>
+    <span class="brand-sub">BinTeum</span>
+    <span class="tagline">제주 여행의 빈 시간을 찾아주는 실측 혼잡 회피 Agent</span>
+  </div>
+  <div class="meta" id="meta">
+    <span class="badge badge-wait" id="data-badge">데이터 확인 중…</span>
+    <span class="muted" id="data-date"></span>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="panel">
+    <form id="form" autocomplete="off">
+      <label class="field">
+        <span class="label">지금 상황을 한 줄로</span>
+        <textarea id="query" rows="4" placeholder="예) 성산에 있는데 지금 너무 붐벼. 애 데리고 6시까지 실내 위주로, 저녁엔 바다 보고 싶어"></textarea>
+      </label>
+
+      <div class="row2">
+        <label class="field">
+          <span class="label">현재 위치(읍면동) <b class="req">*</b></span>
+          <select id="emd"><option value="">선택</option></select>
+        </label>
+        <label class="field">
+          <span class="label">정확한 지점(선택)</span>
+          <select id="spot"><option value="">선택 안 함</option></select>
+        </label>
+      </div>
+
+      <div class="row2">
+        <label class="field">
+          <span class="label">종료(귀가) 시각</span>
+          <input id="end_time" type="time" value="18:00">
+        </label>
+        <label class="field">
+          <span class="label">동행</span>
+          <select id="party">
+            <option value="solo">혼자</option>
+            <option value="couple">커플·부부</option>
+            <option value="family_kid">아이 동반</option>
+            <option value="with_parents">부모님 모시고</option>
+            <option value="friends">친구·일행</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row2">
+        <label class="field">
+          <span class="label">이동수단</span>
+          <select id="mobility">
+            <option value="car">렌터카</option>
+            <option value="bus">버스</option>
+            <option value="walk">도보</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label">예산(원, 선택)</span>
+          <input id="budget" type="number" min="0" step="1000" placeholder="예 30000">
+        </label>
+      </div>
+
+      <label class="check"><input type="checkbox" id="indoor"> 실내 위주로(비·강풍 대비)</label>
+
+      <div class="chips" id="themes">
+        <span class="chip-label">테마</span>
+        <button type="button" class="chip" data-theme="해변">해변</button>
+        <button type="button" class="chip" data-theme="오름">오름</button>
+        <button type="button" class="chip" data-theme="시장">시장</button>
+        <button type="button" class="chip" data-theme="미식">미식</button>
+        <button type="button" class="chip" data-theme="카페">카페</button>
+        <button type="button" class="chip" data-theme="사진">사진</button>
+        <button type="button" class="chip" data-theme="야경">야경</button>
+      </div>
+
+      <button type="submit" class="primary" id="run">빈틈 찾기</button>
+      <p class="hint">추천까지만 합니다. 예약·결제·외부 전송은 하지 않습니다.</p>
+    </form>
+
+    <div class="examples">
+      <span class="chip-label">예시 시나리오</span>
+      <button type="button" class="example" data-scenario="family">성산 · 아이와 실내 위주</button>
+      <button type="button" class="example" data-scenario="budget">애월 · 버스 · 3만원 · 야경</button>
+      <button type="button" class="example" data-scenario="parents">중문 · 부모님 · 걷기 힘듦</button>
+    </div>
+  </aside>
+
+  <section class="results" id="results">
+    <div class="empty" id="empty">
+      <h2>지금 어디가 한산한지, 숫자로 답합니다</h2>
+      <p>읍면동 실측 유동인구(허브 583) · 관광지 계절 기준선(591) · 노선 수요(614) · 날씨(579)로
+      혼잡지수(CI)를 계산해 남은 하루 동선을 3안으로 제시합니다.</p>
+      <ul class="points">
+        <li>모든 추천에 <b>데이터 ID·기준일·수치</b>가 붙습니다.</li>
+        <li>근거가 없는 후보는 Critic이 <b>스스로 반려</b>합니다.</li>
+        <li>데이터 API가 죽으면 <b>스냅샷으로 폴백</b>하고 화면에 표시합니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span id="foot-meta">빈틈 MVP · Python 표준 라이브러리만으로 실행 · 데이터: 제주데이터허브 공개데이터</span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

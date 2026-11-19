@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-11-18T21:58:51",
+  "source": "synthetic-demo",
+  "seed": 7,
+  "reference_date": "20260819",
+  "note": "합성 데모 데이터. 실제 측정값이 아니며 스키마·결측·요일효과·계절곡선을 재현해 파이프라인과 화면을 검증하기 위한 것입니다. 통계 인용 금지.",
+  "datasets": {
+    "flow": {
+      "file": "flow.json",
+      "source": "synthetic-demo",
+      "rows": 1368,
+      "hub_id": 583,
+      "schema": "baseDate, city, emd, gender, ageGroup, resdPop, workPop, visitPop",
+      "aggregation": "성·연령은 '전체/계'로 합산해 저장(파일 크기 절감, 스키마 유지)",
+      "range": [
+        "20260624",
+        "20260819"
+      ]
+    },
+    "tour": {
+      "file": "tour.json",
+      "source": "synthetic-demo",
+      "rows": 2268,
+      "hub_id": 591,
+      "schema": "date(YYYYMM), name, payType, visitors",
+      "range": [
+        "202201",
+        "202412"
+      ],
+      "limitation": "591의 실제 최종 기준월은 2024-12(수집기간 종료). 월 단위이므로 '오늘의 입장객'을 뜻하지 않는다."
+    },
+    "bus": {
+      "file": "bus.json",
+      "source": "synthetic-demo",
+      "rows": 1368,
+      "hub_id": 614,
+      "schema": "baseDate, routeName, routeSubName, moveType, priceType, payType, userCount",
+      "routes": 24,
+      "limitation": "614 API는 게시판에 502 신고가 있는 데이터. 결측 시 P_bus 가중치 자동 재정규화."
+    },
+    "weather": {
+      "file": "weather.json",
+      "source": "synthetic-demo",
+      "rows": 228,
+      "hub_id": 579,
+      "schema": "observatoryName, baseDate, average/lowest/highestTemperature, dailyRainfall, maximumWindSpeed, averageWindSpeed (+578 좌표 결합)",
+      "observatories": [
+        "제주",
+        "성산",
+        "서귀포",
+        "고산"
+      ],
+      "event": "기준일 2026-08-19 악천후(강수 6.2mm·최대풍속 11.5m/s)를 합성으로 배치"
+    },
+    "wifi": {
+      "file": "wifi.json",
+      "source": "synthetic-demo",
+      "rows": 65,
+      "hub_id": 618,
+      "schema": "base_date, mac_address, ap_group_name, install_location_detail, category, category_detail, address_dong, address_detail, latitude, longitude",
+      "use": "대안 스팟 후보 풀·체류 거점 좌표(이번 MVP에서는 카탈로그 보조로만 사용)"
+    }
+  }
+}

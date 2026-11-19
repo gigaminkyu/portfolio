@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>빈틈(BinTeum) — 제주 여행의 빈 시간을 찾아주는 혼잡 회피 Agent</title>
+<style>
+:root{
+  --ink:#1b2430; --ink-soft:#4a5768; --muted:#8a97a8;
+  --sand:#f6f3ec; --card:#ffffff; --line:#e4dfd3;
+  --teal:#0f7d76; --teal-soft:#e3f2f0; --amber:#c47f17; --amber-soft:#fdf1dd;
+  --red:#b4442f; --red-soft:#fbe8e3; --green:#2e7d4f; --green-soft:#e6f2ea;
+  --shadow:0 1px 2px rgba(27,36,48,.06),0 8px 24px rgba(27,36,48,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--sand);color:var(--ink);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.5}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.02em}
+b{font-weight:700}
+button{font-family:inherit}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:24px;
+  padding:16px 28px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.logo{font-size:24px;font-weight:800;letter-spacing:-.06em;color:var(--teal)}
+.brand-sub{font-size:12px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.tagline{font-size:13px;color:var(--ink-soft);border-left:1px solid var(--line);padding-left:12px;margin-left:4px}
+.meta{display:flex;align-items:center;gap:10px;font-size:12px;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.badge{font-size:11.5px;padding:3px 9px;border-radius:999px;font-weight:700;white-space:nowrap}
+.badge-ok{background:var(--green-soft);color:var(--green)}
+.badge-warn{background:var(--amber-soft);color:var(--amber)}
+.badge-live{background:var(--teal-soft);color:var(--teal)}
+.badge-wait{background:#eef1f5;color:var(--muted)}
+.layout{display:grid;grid-template-columns:330px 1fr;gap:22px;padding:22px 28px 60px;align-items:start;max-width:1500px;margin:0 auto}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);position:sticky;top:86px}
+.field{display:block;margin-bottom:12px}
+.label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px}
+.req{color:var(--red)}
+textarea,input,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fcfbf8;
+  font-size:13.5px;color:var(--ink);font-family:inherit;outline:none}
+textarea{resize:vertical;line-height:1.5}
+textarea:focus,input:focus,select:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(15,125,118,.10)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin:6px 0 12px}
+.check input{width:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:14px}
+.chip-label{font-size:12px;font-weight:700;color:var(--muted);margin-right:2px}
+.chip{border:1px solid var(--line);background:#fcfbf8;color:var(--ink-soft);font-size:12px;
+  padding:4px 10px;border-radius:999px;cursor:pointer;transition:.12s}
+.chip:hover{border-color:var(--teal);color:var(--teal)}
+.chip.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+.primary{width:100%;padding:12px;border:0;border-radius:12px;background:var(--teal);color:#fff;
+  font-size:15px;font-weight:800;cursor:pointer;letter-spacing:-.01em}
+.primary:hover{background:#0b6a63}
+.primary:disabled{background:#9dbdb9;cursor:progress}
+.hint{font-size:11.5px;color:var(--muted);margin:8px 0 0;text-align:center}
+.examples{border-top:1px dashed var(--line);margin-top:16px;padding-top:14px;display:flex;flex-direction:column;gap:6px}
+.example{border:1px solid var(--line);background:#fcfbf8;border-radius:9px;padding:7px 10px;font-size:12.5px;
+  color:var(--ink-soft);text-align:left;cursor:pointer}
+.example:hover{border-color:var(--teal);color:var(--teal)}
+.results{min-height:420px}
+.empty{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:34px;box-shadow:var(--shadow)}
+.empty h2{font-size:21px;margin-bottom:8px}
+.empty p{color:var(--ink-soft);font-size:13.5px;max-width:620px}
+.points{margin:14px 0 0;padding-left:18px;color:var(--ink-soft);font-size:13px}
+.points li{margin:4px 0}
+.summary{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:var(--shadow);min-width:120px}
+.stat .k{font-size:11px;color:var(--muted);font-weight:700}
+.stat .v{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.stat .v small{font-size:12px;font-weight:600;color:var(--muted)}
+.constraints{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;
+  box-shadow:var(--shadow);flex:1;min-width:260px}
+.constraints .row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:11.5px;background:#f3f0e8;border-radius:999px;padding:3px 9px;color:var(--ink-soft)}
+.tag.assume{background:var(--amber-soft);color:var(--amber)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px}
+.plan{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.plan.best{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,125,118,.10),var(--shadow)}
+.plan-head{padding:14px 16px 10px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#fcfbf8)}
+.plan-head .name{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.plan-head .head{font-size:12px;color:var(--ink-soft);margin-top:3px}
+.best-flag{font-size:10.5px;background:var(--teal);color:#fff;border-radius:999px;padding:2px 8px;font-weight:700}
+.stops{padding:8px 10px 12px}
+.stop{padding:10px;border-radius:12px;margin:6px 0;background:#fcfbf8;border:1px solid #efeae0}
+.stop-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.stop-name{font-size:13.5px;font-weight:700}
+.stop-meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.ci{text-align:right;min-width:64px}
+.ci .num{font-size:17px;font-weight:800}
+.ci .lab{font-size:10.5px;font-weight:700}
+.ci.low .num,.ci.low .lab{color:var(--green)}
+.ci.mid .num,.ci.mid .lab{color:var(--amber)}
+.ci.high .num,.ci.high .lab{color:var(--red)}
+.bar{height:5px;border-radius:999px;background:#ece7db;margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:currentColor}
+.why{list-style:none;margin:8px 0 0;padding:0;font-size:11.5px;color:var(--ink-soft)}
+.why li{padding:2px 0 2px 12px;position:relative}
+.why li:before{content:"·";position:absolute;left:3px;color:var(--muted)}
+.warn{margin:0 16px 12px;font-size:11.5px;color:var(--amber);background:var(--amber-soft);border-radius:8px;padding:7px 10px}
+.mapbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px}
+.mapbox h3{font-size:14px;margin-bottom:2px}
+.mapbox .sub{font-size:11.5px;color:var(--muted);margin-bottom:8px}
+svg.map{width:100%;height:340px;display:block;background:#eef4f6;border-radius:12px}
+svg.map .island{fill:#e2eae6;stroke:#bfcfc7;stroke-width:1.2}
+svg.map .route{fill:none;stroke:#0f7d76;stroke-width:2.4;stroke-dasharray:0;opacity:.85}
+svg.map .dot{fill:#fff;stroke:#0f7d76;stroke-width:2}
+svg.map .dot.indoor{fill:#fff;stroke:#c47f17}
+svg.map .lbl{font-size:10px;fill:#24313d;font-weight:700;paint-order:stroke;stroke:#f2f7f8;stroke-width:3px;stroke-linejoin:round}
+svg.map .num{font-size:9px;fill:#fff;font-weight:800}
+.detail{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow)}
+.detail h3{font-size:14px;margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:700;font-size:11px}
+.notes{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0;padding-left:16px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ghost{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;font-size:12.5px;
+  color:var(--ink-soft);cursor:pointer;font-weight:700}
+.ghost:hover{border-color:var(--teal);color:var(--teal)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;background:var(--ink);color:#fff;
+  padding:10px 18px;border-radius:999px;font-size:12.5px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+.toast.on{opacity:1}
+.foot{padding:18px 28px 34px;text-align:center;font-size:11.5px;color:var(--muted)}
+.cmp{display:flex;gap:8px;font-size:11px;margin-top:6px;flex-wrap:wrap}
+.cmp span{background:#f3f0e8;border-radius:8px;padding:3px 8px;color:var(--ink-soft)}
+.loading{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:34px;box-shadow:var(--shadow)}
+.loading h2{font-size:18px}
+.loading ol{margin:12px 0 0;padding-left:18px;color:var(--ink-soft);font-size:13px}
+.loading .spin{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--teal);margin-right:6px;animation:p 1s infinite alternate}
+@keyframes p{from{opacity:.25}to{opacity:1}}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;padding:14px}
+  .panel{position:static}
+  .topbar{padding:12px 14px;gap:8px}
+  .tagline{display:none}
+}
+
+</style>
+</head>
+<body><div style="background:#fff8e6;border-bottom:1px solid #f0dfae;padding:8px 28px;font-size:12px;color:#8a6516">저장된 실행 결과 리포트(오프라인) — 입력 폼은 비활성입니다. run_id run-20261118-220832-7ecb6d</div>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">빈틈</span>
+    <span class="brand-sub">BinTeum</span>
+    <span class="tagline">제주 여행의 빈 시간을 찾아주는 실측 혼잡 회피 Agent</span>
+  </div>
+  <div class="meta" id="meta">
+    <span class="badge badge-wait" id="data-badge">데이터 확인 중…</span>
+    <span class="muted" id="data-date"></span>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="panel">
+    <form id="form" autocomplete="off">
+      <label class="field">
+        <span class="label">지금 상황을 한 줄로</span>
+        <textarea id="query" rows="4" placeholder="예) 성산에 있는데 지금 너무 붐벼. 애 데리고 6시까지 실내 위주로, 저녁엔 바다 보고 싶어"></textarea>
+      </label>
+
+      <div class="row2">
+        <label class="field">
+          <span class="label">현재 위치(읍면동) <b class="req">*</b></span>
+          <select id="emd"><option value="">선택</option></select>
+        </label>
+        <label class="field">
+          <span class="label">정확한 지점(선택)</span>
+          <select id="spot"><option value="">선택 안 함</option></select>
+        </label>
+      </div>
+
+      <div class="row2">
+        <label class="field">
+          <span class="label">종료(귀가) 시각</span>
+          <input id="end_time" type="time" value="18:00">
+        </label>
+        <label class="field">
+          <span class="label">동행</span>
+          <select id="party">
+            <option value="solo">혼자</option>
+            <option value="couple">커플·부부</option>
+            <option value="family_kid">아이 동반</option>
+            <option value="with_parents">부모님 모시고</option>
+            <option value="friends">친구·일행</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row2">
+        <label class="field">
+          <span class="label">이동수단</span>
+          <select id="mobility">
+            <option value="car">렌터카</option>
+            <option value="bus">버스</option>
+            <option value="walk">도보</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label">예산(원, 선택)</span>
+          <input id="budget" type="number" min="0" step="1000" placeholder="예 30000">
+        </label>
+      </div>
+
+      <label class="check"><input type="checkbox" id="indoor"> 실내 위주로(비·강풍 대비)</label>
+
+      <div class="chips" id="themes">
+        <span class="chip-label">테마</span>
+        <button type="button" class="chip" data-theme="해변">해변</button>
+        <button type="button" class="chip" data-theme="오름">오름</button>
+        <button type="button" class="chip" data-theme="시장">시장</button>
+        <button type="button" class="chip" data-theme="미식">미식</button>
+        <button type="button" class="chip" data-theme="카페">카페</button>
+        <button type="button" class="chip" data-theme="사진">사진</button>
+        <button type="button" class="chip" data-theme="야경">야경</button>
+      </div>
+
+      <button type="submit" class="primary" id="run">빈틈 찾기</button>
+      <p class="hint">추천까지만 합니다. 예약·결제·외부 전송은 하지 않습니다.</p>
+    </form>
+
+    <div class="examples">
+      <span class="chip-label">예시 시나리오</span>
+      <button type="button" class="example" data-scenario="family">성산 · 아이와 실내 위주</button>
+      <button type="button" class="example" data-scenario="budget">애월 · 버스 · 3만원 · 야경</button>
+      <button type="button" class="example" data-scenario="parents">중문 · 부모님 · 걷기 힘듦</button>
+    </div>
+  </aside>
+
+  <section class="results" id="results">
+    <div class="empty" id="empty">
+      <h2>지금 어디가 한산한지, 숫자로 답합니다</h2>
+      <p>읍면동 실측 유동인구(허브 583) · 관광지 계절 기준선(591) · 노선 수요(614) · 날씨(579)로
+      혼잡지수(CI)를 계산해 남은 하루 동선을 3안으로 제시합니다.</p>
+      <ul class="points">
+        <li>모든 추천에 <b>데이터 ID·기준일·수치</b>가 붙습니다.</li>
+        <li>근거가 없는 후보는 Critic이 <b>스스로 반려</b>합니다.</li>
+        <li>데이터 API가 죽으면 <b>스냅샷으로 폴백</b>하고 화면에 표시합니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span id="foot-meta">빈틈 MVP · Python 표준 라이브러리만으로 실행 · 데이터: 제주데이터허브 공개데이터</span>
+</footer>
+
+<script>window.__BINTEUM_PRESET__={"ok": true, "run_id": "run-20261118-220832-7ecb6d", "generated_at": "2026-11-18T22:08:32", "elapsed_ms": 276, "app": {"name": "빈틈(BinTeum)", "version": "1.0.0", "tagline": "제주 여행의 빈 시간을 찾아주는 실측 혼잡 회피 Agent"}, "constraints": {"raw_query": "애월에 있는데 버스로 다닐 거고 예산 3만원, 9시까지 야경 보고 싶어", "origin_emd": "애월읍", "origin_spot": "handam-beach", "now": "2026-11-18T10:00", "end_time": "21:00", "party": "couple", "mobility": "bus", "indoor_required": false, "low_walk": false, "budget_krw": 30000, "themes": ["야경", "해변"], "meal_needed": true, "tomorrow": false, "confidence": 1.0, "assumptions": [], "asked": []}, "data": {"mode": "mixed", "today": "2026-08-19", "note": "실측 수집분(flow)과 합성 데모 스냅샷(tour, bus, weather, wifi)을 함께 사용했습니다. 데이터셋별 출처는 배지와 결과 JSON에 표시됩니다.", "datasets": [{"dataset": "flow", "hub_id": 583, "mode": "collected", "rows": 2451, "base_date_max": "20260819", "source_note": "제주데이터허브 Open API(583) 실측 수집분. 2026-08-19가 허브가 제공한 마지막 실측일이며, 이후 구간은 허브 클라우드 이전(2026-08-26 공지) 이후 아직 적재되지 않았습니다. · data/snapshot/live/flow.json", "error": ""}, {"dataset": "tour", "hub_id": 591, "mode": "snapshot", "rows": 2268, "base_date_max": "202412", "source_note": "합성 데모 데이터. 실제 측정값이 아니며 스키마·결측·요일효과·계절곡선을 재현해 파이프라인과 화면을 검증하기 위한 것입니다. 통계 인용 금지. (source=synthetic-demo) · data/snapshot/tour.json", "error": ""}, {"dataset": "bus", "hub_id": 614, "mode": "snapshot", "rows": 1368, "base_date_max": "20260819", "source_note": "합성 데모 데이터. 실제 측정값이 아니며 스키마·결측·요일효과·계절곡선을 재현해 파이프라인과 화면을 검증하기 위한 것입니다. 통계 인용 금지. (source=synthetic-demo) · data/snapshot/bus.json", "error": ""}, {"dataset": "weather", "hub_id": 579, "mode": "snapshot", "rows": 228, "base_date_max": "20260819", "source_note": "합성 데모 데이터. 실제 측정값이 아니며 스키마·결측·요일효과·계절곡선을 재현해 파이프라인과 화면을 검증하기 위한 것입니다. 통계 인용 금지. (source=synthetic-demo) · data/snapshot/weather.json", "error": ""}, {"dataset": "wifi", "hub_id": 618, "mode": "snapshot", "rows": 65, "base_date_max": "", "source_note": "합성 데모 데이터. 실제 측정값이 아니며 스키마·결측·요일효과·계절곡선을 재현해 파이프라인과 화면을 검증하기 위한 것입니다. 통계 인용 금지. (source=synthetic-demo) · data/snapshot/wifi.json", "error": ""}]}, "weather": {"date": "20260819", "observatory": "제주", "rain_mm": 6.2, "wind_max_ms": 11.5, "avg_temp_c": 6.5, "bad_weather": true}, "plans": [{"key": "quiet", "label": "안 A · 한산 우선", "headline": "가장 한산한 순서로 6곳 · 평균 CI 57.8 · 이동 162분", "totals": {"stops": 6, "travel_min": 162, "distance_km": 30.7, "cost_krw": 9000, "avg_ci": 57.8, "attraction_min": 290, "span": "10:33~17:52"}, "rationale": "혼잡지수가 낮은 후보를 우선하고, 이동 부담은 최소한으로만 고려했습니다. 예산 30,000원 이내.", "warnings": [], "stops": [{"order": 1, "spot_id": "handam-beach", "spot_name": "한담해변", "emd": "애월읍", "category": "해변", "indoor": false, "arrive": "10:33", "depart": "11:23", "dwell_min": 50, "travel_min": 13, "travel_km": 0.0, "ci": 60, "ci_label": "보통", "cost_krw": 0, "why": ["애월읍 방문인구 백분위 50% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 100% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 55% (허브 614 · 노선 102, 202, 795 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 13분 / 0.0km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5, "tour": 1.0, "bus": 0.5488, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 2, "spot_id": "aewol-cafe-street", "spot_name": "애월 카페거리", "emd": "애월읍", "category": "미식", "indoor": true, "arrive": "11:41", "depart": "12:31", "dwell_min": 50, "travel_min": 18, "travel_km": 2.0, "ci": 66, "ci_label": "보통", "cost_krw": 9000, "why": ["애월읍 방문인구 백분위 50% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 96% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 55% (허브 614 · 노선 102, 202, 795 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 실내 가산 (허브 579 · 제주)", "이동 18분 / 2.0km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5, "tour": 0.9635, "bus": 0.5488, "weather": 0.8833}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 3, "spot_id": "saebyeol", "spot_name": "새별오름", "emd": "애월읍", "category": "오름", "indoor": false, "arrive": "13:04", "depart": "13:54", "dwell_min": 50, "travel_min": 32, "travel_km": 7.0, "ci": 59, "ci_label": "보통", "cost_krw": 0, "why": ["애월읍 방문인구 백분위 50% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 98% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 55% (허브 614 · 노선 102, 202, 795 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 32분 / 7.0km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5, "tour": 0.984, "bus": 0.5488, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 4, "spot_id": "iho-beach", "spot_name": "이호테우해변", "emd": "도두동", "category": "해변", "indoor": false, "arrive": "14:39", "depart": "15:29", "dwell_min": 50, "travel_min": 45, "travel_km": 11.8, "ci": 54, "ci_label": "보통", "cost_krw": 0, "why": ["도두동 방문인구 백분위 35% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 81% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 84% (허브 614 · 노선 300, 320 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 45분 / 11.8km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.3537, "tour": 0.8146, "bus": 0.8415, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 5, "spot_id": "dodubong", "spot_name": "도두봉", "emd": "도두동", "category": "오름", "indoor": false, "arrive": "15:48", "depart": "16:18", "dwell_min": 30, "travel_min": 20, "travel_km": 2.4, "ci": 57, "ci_label": "보통", "cost_krw": 0, "why": ["도두동 방문인구 백분위 35% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 94% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 84% (허브 614 · 노선 300, 320 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 20분 / 2.4km (버스) · 체류 30분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.3537, "tour": 0.9383, "bus": 0.8415, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 6, "spot_id": "dongmun-market", "spot_name": "동문시장", "emd": "이도1동", "category": "시장", "indoor": true, "arrive": "16:52", "depart": "17:52", "dwell_min": 60, "travel_min": 33, "travel_km": 7.5, "ci": 51, "ci_label": "보통", "cost_krw": 0, "why": ["이도1동 방문인구 백분위 6% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 100% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 72% (허브 614 · 노선 300, 315, 325 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 실내 가산 (허브 579 · 제주)", "이동 33분 / 7.5km (버스) · 체류 60분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.061, "tour": 1.0, "bus": 0.7195, "weather": 0.8833}, "confidence": "ok", "travel_mode": "bus"}}]}, {"key": "short", "label": "안 B · 이동 최소", "headline": "이동을 줄이고 6곳 · 평균 CI 57.8 · 이동 162분", "totals": {"stops": 6, "travel_min": 162, "distance_km": 30.7, "cost_krw": 9000, "avg_ci": 57.8, "attraction_min": 290, "span": "10:33~17:52"}, "rationale": "이동시간을 가장 크게 줄이는 조합입니다. 하루에 여러 곳을 무리 없이 도는 데 적합합니다. 예산 30,000원 이내.", "warnings": [], "stops": [{"order": 1, "spot_id": "handam-beach", "spot_name": "한담해변", "emd": "애월읍", "category": "해변", "indoor": false, "arrive": "10:33", "depart": "11:23", "dwell_min": 50, "travel_min": 13, "travel_km": 0.0, "ci": 60, "ci_label": "보통", "cost_krw": 0, "why": ["애월읍 방문인구 백분위 50% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 100% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 55% (허브 614 · 노선 102, 202, 795 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 13분 / 0.0km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5, "tour": 1.0, "bus": 0.5488, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 2, "spot_id": "aewol-cafe-street", "spot_name": "애월 카페거리", "emd": "애월읍", "category": "미식", "indoor": true, "arrive": "11:41", "depart": "12:31", "dwell_min": 50, "travel_min": 18, "travel_km": 2.0, "ci": 66, "ci_label": "보통", "cost_krw": 9000, "why": ["애월읍 방문인구 백분위 50% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 96% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 55% (허브 614 · 노선 102, 202, 795 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 실내 가산 (허브 579 · 제주)", "이동 18분 / 2.0km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5, "tour": 0.9635, "bus": 0.5488, "weather": 0.8833}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 3, "spot_id": "saebyeol", "spot_name": "새별오름", "emd": "애월읍", "category": "오름", "indoor": false, "arrive": "13:04", "depart": "13:54", "dwell_min": 50, "travel_min": 32, "travel_km": 7.0, "ci": 59, "ci_label": "보통", "cost_krw": 0, "why": ["애월읍 방문인구 백분위 50% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 98% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 55% (허브 614 · 노선 102, 202, 795 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 32분 / 7.0km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5, "tour": 0.984, "bus": 0.5488, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 4, "spot_id": "iho-beach", "spot_name": "이호테우해변", "emd": "도두동", "category": "해변", "indoor": false, "arrive": "14:39", "depart": "15:29", "dwell_min": 50, "travel_min": 45, "travel_km": 11.8, "ci": 54, "ci_label": "보통", "cost_krw": 0, "why": ["도두동 방문인구 백분위 35% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 81% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 84% (허브 614 · 노선 300, 320 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 45분 / 11.8km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.3537, "tour": 0.8146, "bus": 0.8415, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 5, "spot_id": "dodubong", "spot_name": "도두봉", "emd": "도두동", "category": "오름", "indoor": false, "arrive": "15:48", "depart": "16:18", "dwell_min": 30, "travel_min": 20, "travel_km": 2.4, "ci": 57, "ci_label": "보통", "cost_krw": 0, "why": ["도두동 방문인구 백분위 35% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 94% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 84% (허브 614 · 노선 300, 320 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 20분 / 2.4km (버스) · 체류 30분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.3537, "tour": 0.9383, "bus": 0.8415, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 6, "spot_id": "dongmun-market", "spot_name": "동문시장", "emd": "이도1동", "category": "시장", "indoor": true, "arrive": "16:52", "depart": "17:52", "dwell_min": 60, "travel_min": 33, "travel_km": 7.5, "ci": 51, "ci_label": "보통", "cost_krw": 0, "why": ["이도1동 방문인구 백분위 6% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 100% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 72% (허브 614 · 노선 300, 315, 325 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 실내 가산 (허브 579 · 제주)", "이동 33분 / 7.5km (버스) · 체류 60분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.061, "tour": 1.0, "bus": 0.7195, "weather": 0.8833}, "confidence": "ok", "travel_mode": "bus"}}]}, {"key": "theme", "label": "안 C · 취향·실내 우선", "headline": "취향에 맞춰 6곳 · 평균 CI 59.0 · 이동 196분", "totals": {"stops": 6, "travel_min": 196, "distance_km": 43.3, "cost_krw": 9000, "avg_ci": 59.0, "attraction_min": 290, "span": "10:33~18:26"}, "rationale": "선호 테마와 실내 조건을 가장 크게 반영한 조합입니다. 예산 30,000원 이내.", "warnings": [], "stops": [{"order": 1, "spot_id": "handam-beach", "spot_name": "한담해변", "emd": "애월읍", "category": "해변", "indoor": false, "arrive": "10:33", "depart": "11:23", "dwell_min": 50, "travel_min": 13, "travel_km": 0.0, "ci": 60, "ci_label": "보통", "cost_krw": 0, "why": ["애월읍 방문인구 백분위 50% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 100% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 55% (허브 614 · 노선 102, 202, 795 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 13분 / 0.0km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5, "tour": 1.0, "bus": 0.5488, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 2, "spot_id": "saebyeol", "spot_name": "새별오름", "emd": "애월읍", "category": "오름", "indoor": false, "arrive": "12:00", "depart": "12:50", "dwell_min": 50, "travel_min": 37, "travel_km": 8.9, "ci": 59, "ci_label": "보통", "cost_krw": 0, "why": ["애월읍 방문인구 백분위 50% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 98% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 55% (허브 614 · 노선 102, 202, 795 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 37분 / 8.9km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5, "tour": 0.984, "bus": 0.5488, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 3, "spot_id": "aewol-cafe-street", "spot_name": "애월 카페거리", "emd": "애월읍", "category": "미식", "indoor": true, "arrive": "13:23", "depart": "14:13", "dwell_min": 50, "travel_min": 32, "travel_km": 7.0, "ci": 66, "ci_label": "보통", "cost_krw": 9000, "why": ["애월읍 방문인구 백분위 50% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 96% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 55% (허브 614 · 노선 102, 202, 795 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 실내 가산 (허브 579 · 제주)", "이동 32분 / 7.0km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5, "tour": 0.9635, "bus": 0.5488, "weather": 0.8833}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 4, "spot_id": "iho-beach", "spot_name": "이호테우해변", "emd": "도두동", "category": "해변", "indoor": false, "arrive": "15:09", "depart": "15:59", "dwell_min": 50, "travel_min": 56, "travel_km": 15.9, "ci": 54, "ci_label": "보통", "cost_krw": 0, "why": ["도두동 방문인구 백분위 35% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 81% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 84% (허브 614 · 노선 300, 320 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 56분 / 15.9km (버스) · 체류 50분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.3537, "tour": 0.8146, "bus": 0.8415, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 5, "spot_id": "dongmun-market", "spot_name": "동문시장", "emd": "이도1동", "category": "시장", "indoor": true, "arrive": "16:38", "depart": "17:38", "dwell_min": 60, "travel_min": 39, "travel_km": 9.5, "ci": 51, "ci_label": "보통", "cost_krw": 0, "why": ["이도1동 방문인구 백분위 6% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 100% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 72% (허브 614 · 노선 300, 315, 325 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 실내 가산 (허브 579 · 제주)", "이동 39분 / 9.5km (버스) · 체류 60분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.061, "tour": 1.0, "bus": 0.7195, "weather": 0.8833}, "confidence": "ok", "travel_mode": "bus"}}, {"order": 6, "spot_id": "yongduam", "spot_name": "용두암", "emd": "용담2동", "category": "자연", "indoor": false, "arrive": "17:56", "depart": "18:26", "dwell_min": 30, "travel_min": 18, "travel_km": 1.9, "ci": 64, "ci_label": "보통", "cost_krw": 0, "why": ["용담2동 방문인구 백분위 52% (허브 583 · 20260819 기준 · 동일 요일유형 41일 표본)", "계절 기준선 92% — 최근 3년 동월 최대 대비 (허브 591 · 최신월 202412)", "노선 수요 백분위 84% (허브 614 · 노선 300, 320 · 41일 표본)", "날씨 6.2mm·최대풍속 11.5m/s → 야외 감산 (허브 579 · 제주)", "이동 18분 / 1.9km (버스) · 체류 30분"], "evidence": {"hub_ids": {"flow": 583, "tour": 591, "bus": 614, "weather": 579}, "base_date": "20260819", "dropped_terms": [], "terms": {"visit": 0.5244, "tour": 0.9179, "bus": 0.8415, "weather": 0.1167}, "confidence": "ok", "travel_mode": "bus"}}]}], "critic": {"quiet": {"passed": true, "rounds": 0, "violations": [], "notes": ["6개 정류장 검증"]}, "short": {"passed": true, "rounds": 0, "violations": [], "notes": ["6개 정류장 검증"]}, "theme": {"passed": true, "rounds": 0, "violations": [], "notes": ["6개 정류장 검증"]}}, "summary": {"best_plan": "quiet", "best_label": "안 A · 한산 우선", "headline": "가장 한산한 순서로 6곳 · 평균 CI 57.8 · 이동 162분", "avg_ci": 57.8, "stops": 6, "travel_min": 162, "comparisons": [{"plan": "quiet", "spot": "한담해변", "ci_now": 50, "ci_next_hour": 53, "basis": "일 단위 실측 CI × 시간대 가정 곡선(추정)"}, {"plan": "short", "spot": "한담해변", "ci_now": 50, "ci_next_hour": 53, "basis": "일 단위 실측 CI × 시간대 가정 곡선(추정)"}, {"plan": "theme", "spot": "한담해변", "ci_now": 50, "ci_next_hour": 53, "basis": "일 단위 실측 CI × 시간대 가정 곡선(추정)"}], "critic_rounds": 0, "critic_passed": true, "critic_history": [{"round": 0, "passed": 3, "total": 3, "violations": []}, {"round": 0, "passed": 3, "total": 3, "violations": []}], "rejections": {}, "narrative": "애월읍에서 출발해 6곳을 도는 동선입니다. 첫 후보인 한담해변의 혼잡지수는 60(보통)이며, 읍면동 방문인구 백분위와 계절 기준선, 노선 수요를 가중 합산한 값입니다. 총 이동 162분, 평균 CI 57.8입니다. 데이터 모드가 스냅샷이므로 화면의 기준일을 확인하세요."}, "notes": ["실측 수집분(flow)과 합성 데모 스냅샷(tour, bus, weather, wifi)을 함께 사용했습니다. 데이터셋별 출처는 배지와 결과 JSON에 표시됩니다.", "혼잡지수는 '예측'이 아니라 실측·계절 보정 기반 상대 순위입니다.", "관광지 내부 인원은 공개 데이터가 없어 직접 관측하지 않습니다(591은 월 단위).", "공휴일은 평일로 계산합니다.", "'지금 vs 1시간 뒤'는 시간대 가정 곡선을 곱한 추정값입니다."], "autonomy": {"자율 수행": ["허브 데이터 조회", "혼잡지수 계산", "후보 동선 생성", "근거 문장 생성"], "사람 확인 필요": ["외부 전송(카톡·메일)", "예약·결제", "일정 확정"], "금지": ["위치 이력 서버 저장", "개인정보 수집", "예약 대행"]}, "llm": {"provider": "none", "available": false}, "trace_path": "/workspace/work/dacon-binteum/out/traces/run-20261118-220832-7ecb6d.jsonl", "share_text": "[빈틈] 애월읍 · 21:00 까지 · 안 A · 한산 우선\n1. 10:33 한담해변 — CI 60(보통), 50분\n2. 11:41 애월 카페거리 — CI 66(보통), 50분\n3. 13:04 새별오름 — CI 59(보통), 50분\n4. 14:39 이호테우해변 — CI 54(보통), 50분\n5. 15:48 도두봉 — CI 57(보통), 30분\n6. 16:52 동문시장 — CI 51(보통), 60분\n이동 162분 · 평균 CI 57.8\n근거: 허브 583(collected), 허브 591(snapshot), 허브 614(snapshot), 허브 579(snapshot), 허브 618(snapshot)"};window.__BINTEUM_META__={"emds": ["성산읍", "우도면", "구좌읍", "조천읍", "이도1동", "삼도2동", "용담2동", "이도2동", "건입동", "애월읍", "한림읍", "안덕면", "대정읍", "중문동", "서귀동", "하효동", "표선면", "남원읍", "연동", "삼양동", "도두동", "노형동", "서호동", "법환동"], "spots": [{"id": "seongsan-ilchulbong", "name": "성산일출봉", "emd": "성산읍", "lat": 33.4586, "lon": 126.9425, "category": "자연", "indoor": false}, {"id": "seopjikoji", "name": "섭지코지", "emd": "성산읍", "lat": 33.4241, "lon": 126.9313, "category": "자연", "indoor": false}, {"id": "udo", "name": "우도", "emd": "우도면", "lat": 33.5009, "lon": 126.9536, "category": "자연", "indoor": false}, {"id": "manjanggul", "name": "만장굴", "emd": "구좌읍", "lat": 33.5285, "lon": 126.7714, "category": "자연", "indoor": true}, {"id": "bijarim", "name": "비자림", "emd": "구좌읍", "lat": 33.4846, "lon": 126.8087, "category": "자연", "indoor": false}, {"id": "gimnyeong-beach", "name": "김녕해수욕장", "emd": "구좌읍", "lat": 33.5561, "lon": 126.7595, "category": "해변", "indoor": false}, {"id": "hamdeok-beach", "name": "함덕해수욕장", "emd": "조천읍", "lat": 33.5433, "lon": 126.67, "category": "해변", "indoor": false}, {"id": "dongmun-market", "name": "동문시장", "emd": "이도1동", "lat": 33.5116, "lon": 126.526, "category": "시장", "indoor": true}, {"id": "jeju-mokgwana", "name": "제주목관아", "emd": "삼도2동", "lat": 33.5147, "lon": 126.5216, "category": "역사", "indoor": false}, {"id": "yongduam", "name": "용두암", "emd": "용담2동", "lat": 33.517, "lon": 126.5122, "category": "자연", "indoor": false}, {"id": "jeju-national-museum", "name": "국립제주박물관", "emd": "이도2동", "lat": 33.5085, "lon": 126.5408, "category": "실내문화", "indoor": true}, {"id": "sarabong", "name": "사라봉", "emd": "건입동", "lat": 33.5188, "lon": 126.5407, "category": "오름", "indoor": false}, {"id": "handam-beach", "name": "한담해변", "emd": "애월읍", "lat": 33.4632, "lon": 126.3163, "category": "해변", "indoor": false}, {"id": "hyeopjae-beach", "name": "협재해수욕장", "emd": "한림읍", "lat": 33.3942, "lon": 126.2398, "category": "해변", "indoor": false}, {"id": "geumneung-beach", "name": "금능해수욕장", "emd": "한림읍", "lat": 33.3905, "lon": 126.2451, "category": "해변", "indoor": false}, {"id": "hallim-park", "name": "한림공원", "emd": "한림읍", "lat": 33.4103, "lon": 126.2404, "category": "테마파크", "indoor": false}, {"id": "osulloc", "name": "오설록 티뮤지엄", "emd": "안덕면", "lat": 33.3019, "lon": 126.356, "category": "실내문화", "indoor": true}, {"id": "sanbangsan", "name": "산방산", "emd": "안덕면", "lat": 33.2358, "lon": 126.3146, "category": "자연", "indoor": false}, {"id": "songaksan", "name": "송악산", "emd": "대정읍", "lat": 33.1958, "lon": 126.2928, "category": "오름", "indoor": false}, {"id": "moseulpo-harbor", "name": "모슬포항", "emd": "대정읍", "lat": 33.214, "lon": 126.2515, "category": "항구", "indoor": false}, {"id": "jungmun-beach", "name": "중문색달해수욕장", "emd": "중문동", "lat": 33.2443, "lon": 126.4116, "category": "해변", "indoor": false}, {"id": "jusangjeolli", "name": "주상절리대", "emd": "중문동", "lat": 33.2379, "lon": 126.4255, "category": "자연", "indoor": false}, {"id": "yeomiji", "name": "여미지식물원", "emd": "중문동", "lat": 33.2508, "lon": 126.4113, "category": "실내문화", "indoor": true}, {"id": "cheonjiyeon", "name": "천지연폭포", "emd": "서귀동", "lat": 33.2469, "lon": 126.554, "category": "자연", "indoor": false}, {"id": "jeongbang", "name": "정방폭포", "emd": "서귀동", "lat": 33.239, "lon": 126.57, "category": "자연", "indoor": false}, {"id": "olle-market", "name": "서귀포매일올레시장", "emd": "서귀동", "lat": 33.2493, "lon": 126.5635, "category": "시장", "indoor": true}, {"id": "lee-jungseop-street", "name": "이중섭거리", "emd": "서귀동", "lat": 33.2455, "lon": 126.5629, "category": "예술", "indoor": false}, {"id": "soesokkak", "name": "쇠소깍", "emd": "하효동", "lat": 33.2525, "lon": 126.625, "category": "자연", "indoor": false}, {"id": "camelliahill", "name": "카멜리아힐", "emd": "안덕면", "lat": 33.2896, "lon": 126.3625, "category": "테마파크", "indoor": false}, {"id": "sangumburi", "name": "산굼부리", "emd": "조천읍", "lat": 33.5027, "lon": 126.7357, "category": "자연", "indoor": false}, {"id": "saryeoni", "name": "사려니숲길", "emd": "조천읍", "lat": 33.4424, "lon": 126.6297, "category": "자연", "indoor": false}, {"id": "seongeup", "name": "성읍민속마을", "emd": "표선면", "lat": 33.3936, "lon": 126.7996, "category": "역사", "indoor": false}, {"id": "pyoseon-beach", "name": "표선해수욕장", "emd": "표선면", "lat": 33.3259, "lon": 126.8377, "category": "해변", "indoor": false}, {"id": "keuneong", "name": "큰엉해안", "emd": "남원읍", "lat": 33.2933, "lon": 126.7411, "category": "자연", "indoor": false}, {"id": "darangshi", "name": "다랑쉬오름", "emd": "구좌읍", "lat": 33.4877, "lon": 126.834, "category": "오름", "indoor": false}, {"id": "yongnuni", "name": "용눈이오름", "emd": "구좌읍", "lat": 33.4727, "lon": 126.8543, "category": "오름", "indoor": false}, {"id": "saebyeol", "name": "새별오름", "emd": "애월읍", "lat": 33.4432, "lon": 126.3835, "category": "오름", "indoor": false}, {"id": "geumo", "name": "금오름", "emd": "한림읍", "lat": 33.4132, "lon": 126.2223, "category": "오름", "indoor": false}, {"id": "aerospace-museum", "name": "항공우주박물관", "emd": "안덕면", "lat": 33.3157, "lon": 126.339, "category": "실내문화", "indoor": true}, {"id": "provincial-art-museum", "name": "제주도립미술관", "emd": "연동", "lat": 33.4683, "lon": 126.4968, "category": "실내문화", "indoor": true}, {"id": "shinhwa-world", "name": "신화월드", "emd": "안덕면", "lat": 33.3047, "lon": 126.3167, "category": "테마파크", "indoor": true}, {"id": "heukdwaeji-street", "name": "흑돼지거리", "emd": "연동", "lat": 33.4707, "lon": 126.4908, "category": "미식", "indoor": true}, {"id": "samyang-beach", "name": "삼양검은모래해변", "emd": "삼양동", "lat": 33.5242, "lon": 126.5977, "category": "해변", "indoor": false}, {"id": "iho-beach", "name": "이호테우해변", "emd": "도두동", "lat": 33.4979, "lon": 126.4516, "category": "해변", "indoor": false}, {"id": "dodubong", "name": "도두봉", "emd": "도두동", "lat": 33.5079, "lon": 126.4664, "category": "오름", "indoor": false}, {"id": "dolculture-park", "name": "제주돌문화공원", "emd": "조천읍", "lat": 33.4432, "lon": 126.6636, "category": "실내문화", "indoor": false}, {"id": "aquaplanet", "name": "아쿠아플라넷 제주", "emd": "성산읍", "lat": 33.437, "lon": 126.9262, "category": "실내문화", "indoor": true}, {"id": "haenyeo-museum", "name": "해녀박물관", "emd": "구좌읍", "lat": 33.5487, "lon": 126.7796, "category": "실내문화", "indoor": true}, {"id": "sehwa-beach", "name": "세화해변", "emd": "구좌읍", "lat": 33.5254, "lon": 126.8617, "category": "해변", "indoor": false}, {"id": "ecoland", "name": "에코랜드", "emd": "조천읍", "lat": 33.4652, "lon": 126.6633, "category": "테마파크", "indoor": false}, {"id": "snoopy-garden", "name": "스누피가든", "emd": "구좌읍", "lat": 33.5313, "lon": 126.784, "category": "실내문화", "indoor": true}, {"id": "nexon-museum", "name": "넥슨컴퓨터박물관", "emd": "노형동", "lat": 33.4847, "lon": 126.4777, "category": "실내문화", "indoor": true}, {"id": "oedolgae", "name": "외돌개", "emd": "서호동", "lat": 33.2379, "lon": 126.5447, "category": "자연", "indoor": false}, {"id": "chilsipri-beach", "name": "칠십리해변", "emd": "법환동", "lat": 33.2422, "lon": 126.568, "category": "해변", "indoor": false}, {"id": "seowoo-bong", "name": "서우봉", "emd": "조천읍", "lat": 33.551, "lon": 126.645, "category": "오름", "indoor": false}, {"id": "yongmeori", "name": "용머리해안", "emd": "안덕면", "lat": 33.2309, "lon": 126.3108, "category": "자연", "indoor": false}, {"id": "ttarabi", "name": "따라비오름", "emd": "표선면", "lat": 33.3762, "lon": 126.7571, "category": "오름", "indoor": false}, {"id": "gimnyeong-maze", "name": "김녕미로공원", "emd": "구좌읍", "lat": 33.5238, "lon": 126.7564, "category": "테마파크", "indoor": false}, {"id": "seongsan-food-street", "name": "성산 맛집골목", "emd": "성산읍", "lat": 33.452, "lon": 126.918, "category": "미식", "indoor": true}, {"id": "sehwa-food-street", "name": "세화 식당가", "emd": "구좌읍", "lat": 33.524, "lon": 126.857, "category": "미식", "indoor": true}, {"id": "pyoseon-food-street", "name": "표선 식당가", "emd": "표선면", "lat": 33.3886, "lon": 126.8093, "category": "미식", "indoor": true}, {"id": "jungmun-food-street", "name": "중문 식당가", "emd": "중문동", "lat": 33.252, "lon": 126.417, "category": "미식", "indoor": true}, {"id": "aewol-cafe-street", "name": "애월 카페거리", "emd": "애월읍", "lat": 33.462, "lon": 126.332, "category": "미식", "indoor": true}], "data": {"mode": "mixed", "today": "2026-08-19", "note": "실측 수집분(flow)과 합성 데모 스냅샷(tour, bus, weather, wifi)을 함께 사용했습니다. 데이터셋별 출처는 배지와 결과 JSON에 표시됩니다.", "datasets": [{"dataset": "flow", "hub_id": 583, "mode": "collected", "rows": 2451, "base_date_max": "20260819", "source_note": "제주데이터허브 Open API(583) 실측 수집분. 2026-08-19가 허브가 제공한 마지막 실측일이며, 이후 구간은 허브 클라우드 이전(2026-08-26 공지) 이후 아직 적재되지 않았습니다. · data/snapshot/live/flow.json", "error": ""}, {"dataset": "tour", "hub_id": 591, "mode": "snapshot", "rows": 2268, "base_date_max": "202412", "source_note": "합성 데모 데이터. 실제 측정값이 아니며 스키마·결측·요일효과·계절곡선을 재현해 파이프라인과 화면을 검증하기 위한 것입니다. 통계 인용 금지. (source=synthetic-demo) · data/snapshot/tour.json", "error": ""}, {"dataset": "bus", "hub_id": 614, "mode": "snapshot", "rows": 1368, "base_date_max": "20260819", "source_note": "합성 데모 데이터. 실제 측정값이 아니며 스키마·결측·요일효과·계절곡선을 재현해 파이프라인과 화면을 검증하기 위한 것입니다. 통계 인용 금지. (source=synthetic-demo) · data/snapshot/bus.json", "error": ""}, {"dataset": "weather", "hub_id": 579, "mode": "snapshot", "rows": 228, "base_date_max": "20260819", "source_note": "합성 데모 데이터. 실제 측정값이 아니며 스키마·결측·요일효과·계절곡선을 재현해 파이프라인과 화면을 검증하기 위한 것입니다. 통계 인용 금지. (source=synthetic-demo) · data/snapshot/weather.json", "error": ""}, {"dataset": "wifi", "hub_id": 618, "mode": "snapshot", "rows": 65, "base_date_max": "", "source_note": "합성 데모 데이터. 실제 측정값이 아니며 스키마·결측·요일효과·계절곡선을 재현해 파이프라인과 화면을 검증하기 위한 것입니다. 통계 인용 금지. (source=synthetic-demo) · data/snapshot/wifi.json", "error": ""}]}};</script>
+<script>
+/* 빈틈(BinTeum) 웹 UI — 프레임워크 없이 동작. 서버 모드와 오프라인 리포트 모드를 같은 코드로 렌더한다. */
+(function () {
+  "use strict";
+
+  const PRESET = window.__BINTEUM_PRESET__ || null;   // 저장된 실행 결과(오프라인 리포트)
+  const META_PRESET = window.__BINTEUM_META__ || null;
+  const $ = (sel) => document.querySelector(sel);
+  const el = (tag, cls, text) => {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  };
+
+  let META = META_PRESET || { emds: [], spots: [], data: null, scenarios: [] };
+  let STATE = { result: null, selected: null, themes: new Set(), view: "cards" };
+
+  const SCENARIOS = {
+    family: {
+      query: "성산에 있는데 지금 너무 붐벼. 애가 3살이라 오후엔 실내 위주로, 6시까지 숙소 복귀",
+      emd: "성산읍", spot: "seongsan-ilchulbong", end_time: "18:00",
+      party: "family_kid", mobility: "car", indoor: true, themes: ["가족", "실내"],
+    },
+    budget: {
+      query: "애월에 있는데 버스로 다닐 거고 예산 3만원, 9시까지 야경 보고 싶어",
+      emd: "애월읍", spot: "handam-beach", end_time: "21:00",
+      party: "couple", mobility: "bus", indoor: false, themes: ["야경", "해변"],
+    },
+    parents: {
+      query: "중문인데 부모님 모시고 있어요. 걷기 힘드셔서 이동 짧게, 5시까지",
+      emd: "중문동", spot: "jungmun-beach", end_time: "17:00",
+      party: "with_parents", mobility: "car", indoor: false, themes: ["자연"],
+    },
+  };
+
+  /* ---------------------------------------------------------------- 초기화 */
+  async function init() {
+    if (PRESET) {
+      META = META_PRESET || META;
+      fillSelects();
+      renderResult(PRESET);
+      document.querySelectorAll(".example").forEach((b) => (b.disabled = true));
+      $("#run").disabled = true;
+      $("#run").textContent = "저장된 실행 결과";
+      return;
+    }
+    try {
+      const res = await fetch("/api/meta");
+      META = await res.json();
+    } catch (err) {
+      setBadge("서버 연결 실패", "warn");
+    }
+    fillSelects();
+    renderDataBadge();
+    bind();
+  }
+
+  function fillSelects() {
+    const emdSel = $("#emd");
+    (META.emds || []).forEach((emd) => {
+      const opt = el("option", null, emd);
+      opt.value = emd;
+      emdSel.appendChild(opt);
+    });
+    const spotSel = $("#spot");
+    (META.spots || []).forEach((spot) => {
+      const opt = el("option", null, `${spot.name} (${spot.emd})`);
+      opt.value = spot.id;
+      spotSel.appendChild(opt);
+    });
+  }
+
+  function bind() {
+    $("#form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await run();
+    });
+    document.querySelectorAll("#themes .chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const theme = chip.dataset.theme;
+        if (STATE.themes.has(theme)) STATE.themes.delete(theme);
+        else STATE.themes.add(theme);
+        chip.classList.toggle("on", STATE.themes.has(theme));
+      });
+    });
+    document.querySelectorAll(".example").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        applyScenario(btn.dataset.scenario);
+        run();
+      });
+    });
+    $("#emd").addEventListener("change", () => { $("#spot").value = ""; });
+  }
+
+  function applyScenario(key) {
+    const sc = SCENARIOS[key];
+    if (!sc) return;
+    $("#query").value = sc.query;
+    $("#emd").value = sc.emd;
+    $("#end_time").value = sc.end_time;
+    $("#party").value = sc.party;
+    $("#mobility").value = sc.mobility;
+    $("#indoor").checked = !!sc.indoor;
+    $("#budget").value = "";
+    STATE.themes = new Set(sc.themes || []);
+    document.querySelectorAll("#themes .chip").forEach((chip) => {
+      chip.classList.toggle("on", STATE.themes.has(chip.dataset.theme));
+    });
+  }
+
+  /* ---------------------------------------------------------------- 실행 */
+  async function run() {
+    const body = {
+      query: $("#query").value.trim(),
+      emd: $("#emd").value,
+      spot_id: $("#spot").value,
+      end_time: $("#end_time").value,
+      party: $("#party").value,
+      mobility: $("#mobility").value,
+      indoor: $("#indoor").checked,
+      budget: $("#budget").value ? Number($("#budget").value) : null,
+      themes: Array.from(STATE.themes),
+    };
+    if (!body.emd && !body.query) {
+      toast("현재 위치(읍면동)를 고르거나 상황을 한 줄 적어 주세요");
+      return;
+    }
+    $("#run").disabled = true;
+    $("#run").textContent = "계산 중…";
+    $("#results").replaceChildren(
+      (() => {
+        const box = el("div", "loading");
+        box.appendChild(el("h2", null, "에이전트가 계산하고 있습니다"));
+        const steps = el("ol");
+        ["Router · 제약 추출", "Data · 허브/스냅샷 로딩", "Index · 혼잡지수 계산",
+          "Planner · 동선 3안", "Critic · 규칙 검증", "Reporter · 근거 정리"].forEach((s) => {
+          const li = el("li", null, s);
+          box.appendChild(li);
+        });
+        box.appendChild(el("p", "hint", "보통 1초 안에 끝납니다."));
+        return box;
+      })()
+    );
+    try {
+      const res = await fetch("/api/plan", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      const payload = await res.json();
+      renderResult(payload);
+    } catch (err) {
+      const box = el("div", "empty");
+      box.appendChild(el("h2", null, "요청을 처리하지 못했습니다"));
+      box.appendChild(el("p", null, String(err)));
+      $("#results").replaceChildren(box);
+    } finally {
+      $("#run").disabled = false;
+      $("#run").textContent = "빈틈 찾기";
+    }
+  }
+
+  /* ---------------------------------------------------------------- 상태 배지 */
+  function setBadge(text, kind) {
+    const badge = $("#data-badge");
+    badge.textContent = text;
+    badge.className = "badge badge-" + (kind || "wait");
+  }
+
+  function renderDataBadge(data) {
+    data = data || (META && META.data);
+    if (!data) { setBadge("데이터 확인 중…", "wait"); return; }
+    const map = {
+      live: ["실시간 허브 API", "live"],
+      collected: ["실측 수집 데이터", "live"],
+      mixed: ["실측 + 일부 스냅샷", "warn"],
+      snapshot: ["동봉 데모 스냅샷", "warn"],
+      empty: ["데이터 없음", "warn"],
+    };
+    const [label, kind] = map[data.mode] || ["상태 미확인", "wait"];
+    setBadge(label, kind);
+    const ds = data.datasets || [];
+    const allSynthetic = ds.length > 0 && ds.every((d) => (d.source_note || "").includes("synthetic-demo"));
+    const someSynthetic = ds.some((d) => (d.source_note || "").includes("synthetic-demo"));
+    $("#data-date").textContent =
+      (data.today ? "기준일 " + data.today : "") +
+      (allSynthetic ? " · 합성 데모 데이터" : someSynthetic ? " · 일부 합성" : "");
+  }
+
+  /* ---------------------------------------------------------------- 렌더 */
+  function renderResult(payload) {
+    STATE.result = payload;
+    STATE.selected = (payload.summary && payload.summary.best_plan) || (payload.plans && payload.plans[0] && payload.plans[0].key);
+    renderDataBadge(payload.data);
+    const root = $("#results");
+    root.replaceChildren();
+
+    if (payload.error) {
+      const box = el("div", "empty");
+      box.appendChild(el("h2", null, "요청을 처리하지 못했습니다"));
+      box.appendChild(el("p", null, String(payload.error)));
+      root.appendChild(box);
+      return;
+    }
+    if (payload.status === "needs_input") {
+      const box = el("div", "empty");
+      box.appendChild(el("h2", null, payload.message || "위치를 알려주세요"));
+      box.appendChild(el("p", null, "읍면동을 고르면 나머지는 기본값으로 계산합니다."));
+      root.appendChild(box);
+      return;
+    }
+    if (!payload.ok && payload.status === "no_data") {
+      const box = el("div", "empty");
+      box.appendChild(el("h2", null, "데이터가 없습니다"));
+      (payload.notes || []).forEach((n) => box.appendChild(el("p", null, n)));
+      root.appendChild(box);
+      return;
+    }
+
+    root.appendChild(renderSummary(payload));
+    root.appendChild(renderPlans(payload));
+    root.appendChild(renderMap(payload));
+    root.appendChild(renderDetail(payload));
+    root.appendChild(renderActions(payload));
+  }
+
+  function renderSummary(payload) {
+    const wrap = el("div", "summary");
+    const s = payload.summary || {};
+    const c = payload.constraints || {};
+    const stat = (k, v, small) => {
+      const box = el("div", "stat");
+      box.appendChild(el("div", "k", k));
+      const value = el("div", "v", v === null || v === undefined ? "-" : String(v));
+      if (small) value.appendChild(el("small", null, " " + small));
+      box.appendChild(value);
+      return box;
+    };
+    wrap.appendChild(stat("추천 동선", s.stops || 0, "곳"));
+    wrap.appendChild(stat("평균 혼잡지수", s.avg_ci === null || s.avg_ci === undefined ? "-" : s.avg_ci));
+    wrap.appendChild(stat("총 이동", s.travel_min || 0, "분"));
+    wrap.appendChild(stat("Critic 반려", s.critic_rounds || 0, "회"));
+    wrap.appendChild(stat("응답", payload.elapsed_ms || 0, "ms"));
+
+    const box = el("div", "constraints");
+    box.appendChild(el("div", "k", "해석된 제약 (Router)"));
+    const row = el("div", "row");
+    const add = (text, cls) => row.appendChild(el("span", "tag" + (cls ? " " + cls : ""), text));
+    if (c.origin_emd) add("현재 " + c.origin_emd);
+    if (c.end_time) add(c.end_time + "까지");
+    add({ solo: "혼자", couple: "커플", family_kid: "아이 동반", with_parents: "부모님", friends: "일행" }[c.party] || c.party);
+    add({ car: "렌터카", bus: "버스", walk: "도보" }[c.mobility] || c.mobility);
+    if (c.indoor_required) add("실내 위주");
+    if (c.budget_krw) add("예산 " + c.budget_krw.toLocaleString() + "원");
+    (c.themes || []).forEach((t) => add("#" + t));
+    (c.assumptions || []).forEach((a) => add("가정: " + a, "assume"));
+    box.appendChild(row);
+    const cmp = s.comparisons && s.comparisons[0];
+    if (cmp) {
+      const line = el("div", "cmp");
+      line.appendChild(el("span", null, `${cmp.spot} 지금 추정 CI ${cmp.ci_now}`));
+      line.appendChild(el("span", null, `1시간 뒤 추정 CI ${cmp.ci_next_hour}`));
+      line.appendChild(el("span", null, "시간대 가정 곡선 적용(추정)"));
+      box.appendChild(line);
+    }
+    wrap.appendChild(box);
+    return wrap;
+  }
+
+  function renderPlans(payload) {
+    const grid = el("div", "plans");
+    const best = (payload.summary || {}).best_plan;
+    (payload.plans || []).forEach((plan) => {
+      const card = el("div", "plan" + (plan.key === best ? " best" : ""));
+      const head = el("div", "plan-head");
+      const name = el("div", "name");
+      name.appendChild(el("span", null, plan.label));
+      if (plan.key === best) name.appendChild(el("span", "best-flag", "추천"));
+      head.appendChild(name);
+      head.appendChild(el("div", "head", plan.headline));
+      card.appendChild(head);
+
+      const stops = el("div", "stops");
+      if (!plan.stops.length) {
+        stops.appendChild(el("div", "stop", "조건을 만족하는 후보가 없습니다."));
+      }
+      plan.stops.forEach((stop) => {
+        const box = el("div", "stop");
+        const top = el("div", "stop-top");
+        const left = el("div");
+        left.appendChild(el("div", "stop-name", `${stop.order}. ${stop.spot_name}`));
+        left.appendChild(el("div", "stop-meta",
+          `${stop.arrive}~${stop.depart} · ${stop.dwell_min}분 · 이동 ${stop.travel_min}분(${stop.travel_km}km)`));
+        top.appendChild(left);
+
+        const ciClass = stop.ci >= 70 ? "high" : stop.ci >= 45 ? "mid" : "low";
+        const ciBox = el("div", "ci " + ciClass);
+        ciBox.appendChild(el("div", "num", String(stop.ci)));
+        ciBox.appendChild(el("div", "lab", stop.ci_label));
+        top.appendChild(ciBox);
+        box.appendChild(top);
+
+        const bar = el("div", "bar " + ciClass);
+        const fill = el("i");
+        fill.style.width = Math.max(2, Math.min(100, stop.ci)) + "%";
+        fill.style.background = "currentColor";
+        bar.style.color = `var(--${ciClass === "high" ? "red" : ciClass === "mid" ? "amber" : "green"})`;
+        bar.appendChild(fill);
+        box.appendChild(bar);
+
+        const why = el("ul", "why");
+        (stop.why || []).slice(0, 4).forEach((w) => why.appendChild(el("li", null, w)));
+        box.appendChild(why);
+        stops.appendChild(box);
+      });
+      card.appendChild(stops);
+      (plan.warnings || []).forEach((w) => card.appendChild(el("div", "warn", w)));
+      grid.appendChild(card);
+    });
+    return grid;
+  }
+
+  /* ---------------------------------------------------------------- 지도(SVG, 타일 불필요) */
+  var ISLAND = [
+    [126.530, 33.515], [126.580, 33.525], [126.620, 33.532], [126.670, 33.545],
+    [126.720, 33.552], [126.760, 33.550], [126.800, 33.540], [126.850, 33.532],
+    [126.890, 33.510], [126.930, 33.480], [126.945, 33.455], [126.930, 33.415],
+    [126.890, 33.375], [126.850, 33.345], [126.820, 33.320], [126.780, 33.300],
+    [126.730, 33.270], [126.680, 33.255], [126.630, 33.248], [126.580, 33.240],
+    [126.545, 33.236], [126.500, 33.235], [126.450, 33.232], [126.410, 33.238],
+    [126.360, 33.225], [126.320, 33.215], [126.280, 33.212], [126.245, 33.213],
+    [126.210, 33.225], [126.175, 33.250], [126.165, 33.290], [126.155, 33.330],
+    [126.170, 33.360], [126.195, 33.390], [126.225, 33.415], [126.255, 33.440],
+    [126.290, 33.462], [126.330, 33.470], [126.380, 33.480], [126.430, 33.495],
+    [126.470, 33.505], [126.500, 33.512]
+  ];
+  var BOUNDS = { lon0: 126.14, lon1: 126.96, lat0: 33.10, lat1: 33.57 };
+
+  var VIEW = BOUNDS;
+
+  function project(lon, lat, w, h) {
+    var x = ((lon - VIEW.lon0) / (VIEW.lon1 - VIEW.lon0)) * w;
+    var y = ((VIEW.lat1 - lat) / (VIEW.lat1 - VIEW.lat0)) * h;
+    return [x, y];
+  }
+
+  var MAP_W = 900, MAP_H = 340;
+
+  function fitView(coords) {
+    if (!coords || coords.length < 2) return BOUNDS;
+    var lons = coords.map(function (c) { return c[0]; });
+    var lats = coords.map(function (c) { return c[1]; });
+    var pad = 0.035;
+    var lon0 = Math.min.apply(null, lons) - pad;
+    var lon1 = Math.max.apply(null, lons) + pad;
+    var lat0 = Math.min.apply(null, lats) - pad * 0.75;
+    var lat1 = Math.max.apply(null, lats) + pad * 0.75;
+    var minSpan = 0.14;
+    if (lon1 - lon0 < minSpan) { var cx = (lon0 + lon1) / 2; lon0 = cx - minSpan / 2; lon1 = cx + minSpan / 2; }
+    if (lat1 - lat0 < minSpan * 0.62) { var cy = (lat0 + lat1) / 2; lat0 = cy - minSpan * 0.31; lat1 = cy + minSpan * 0.31; }
+    // 제주 위도(33.36°)에서 경도 1도 ≈ 위도 1도×cos(위도) 이므로, 화면비에 맞춰
+    // 위도 폭을 다시 잡아 섬 모양이 납작해지지 않게 한다(등방 투영).
+    var cosLat = Math.cos(33.36 * Math.PI / 180);
+    var wantLat = (lon1 - lon0) * cosLat * (MAP_H / MAP_W);
+    if (lat1 - lat0 < wantLat) {
+      var cy2 = (lat0 + lat1) / 2;
+      lat0 = cy2 - wantLat / 2; lat1 = cy2 + wantLat / 2;
+    }
+    return { lon0: lon0, lon1: lon1, lat0: lat0, lat1: lat1 };
+  }
+
+  function svgNode(name, attrs) {
+    var node = document.createElementNS("http://www.w3.org/2000/svg", name);
+    Object.entries(attrs || {}).forEach(function (entry) { node.setAttribute(entry[0], entry[1]); });
+    return node;
+  }
+
+  function renderMap(payload) {
+    var wrap = el("div", "mapbox");
+    var plan = (payload.plans || []).find(function (p) { return p.key === STATE.selected; }) || (payload.plans || [])[0];
+    wrap.appendChild(el("h3", null, "동선 지도 — " + (plan ? plan.label : "")));
+    wrap.appendChild(el("div", "sub", "좌표 기반 도식(타일·지도 API 불필요, 오프라인 동작). 동선에 맞춰 자동 확대됩니다."));
+    var W = MAP_W, H = MAP_H;
+    var byId = {};
+    (META.spots || []).forEach(function (s) { byId[s.id] = s; });
+    var origin = byId[(payload.constraints || {}).origin_spot];
+
+    var coords = [];
+    if (origin) coords.push([origin.lon, origin.lat]);
+    (plan ? plan.stops : []).forEach(function (stop) {
+      if (byId[stop.spot_id]) coords.push([byId[stop.spot_id].lon, byId[stop.spot_id].lat]);
+    });
+    VIEW = fitView(coords);
+
+    var svg = svgNode("svg", { class: "map", viewBox: "0 0 " + W + " " + H });
+    svg.appendChild(svgNode("polygon", {
+      class: "island",
+      points: ISLAND.map(function (pt) { return project(pt[0], pt[1], W, H).join(","); }).join(" ")
+    }));
+
+    var points = coords.map(function (c) { return project(c[0], c[1], W, H); });
+    if (points.length > 1) {
+      svg.appendChild(svgNode("polyline", {
+        class: "route", points: points.map(function (p) { return p.join(","); }).join(" ")
+      }));
+    }
+    (plan ? plan.stops : []).forEach(function (stop, idx) {
+      var meta = byId[stop.spot_id];
+      if (!meta) return;
+      var p = project(meta.lon, meta.lat, W, H);
+      svg.appendChild(svgNode("circle", { class: "dot" + (stop.indoor ? " indoor" : ""),
+        cx: p[0], cy: p[1], r: 9 }));
+      var num = svgNode("text", { x: p[0], y: p[1] + 3, "text-anchor": "middle", class: "num" });
+      num.textContent = String(idx + 1);
+      svg.appendChild(num);
+      var right = p[0] < W * 0.68;
+      var label = svgNode("text", {
+        x: right ? p[0] + 13 : p[0] - 13,
+        y: p[1] + 3 + (idx % 2 === 0 ? -11 : 11),
+        class: "lbl", "text-anchor": right ? "start" : "end"
+      });
+      label.textContent = stop.spot_name;
+      svg.appendChild(label);
+    });
+    if (origin) {
+      var op = project(origin.lon, origin.lat, W, H);
+      svg.appendChild(svgNode("circle", { class: "dot", cx: op[0], cy: op[1], r: 5,
+        fill: "#c47f17", stroke: "#fff" }));
+      var olabel = svgNode("text", { x: op[0], y: op[1] - 12, class: "lbl", "text-anchor": "middle" });
+      olabel.textContent = "출발";
+      svg.appendChild(olabel);
+    }
+    wrap.appendChild(svg);
+    return wrap;
+  }
+
+  function renderDetail(payload) {
+    const plan = (payload.plans || []).find((p) => p.key === STATE.selected) || (payload.plans || [])[0];
+    const wrap = el("div", "detail");
+    wrap.appendChild(el("h3", null, "근거 상세 — 데이터 ID · 기준일 · 수치"));
+    if (!plan) return wrap;
+
+    const table = el("table");
+    const thead = el("tr");
+    ["#", "장소", "CI", "사용 항(가중치)", "제외 항", "기준일", "신뢰도"].forEach((h) =>
+      thead.appendChild(el("th", null, h))
+    );
+    table.appendChild(thead);
+    plan.stops.forEach((stop) => {
+      const tr = el("tr");
+      tr.appendChild(el("td", null, String(stop.order)));
+      tr.appendChild(el("td", null, stop.spot_name));
+      tr.appendChild(el("td", null, `${stop.ci} (${stop.ci_label})`));
+      const terms = stop.evidence.terms || {};
+      const weights = stop.evidence.weights || {};
+      tr.appendChild(el("td", null,
+        Object.entries(terms).filter(([, v]) => v !== null)
+          .map(([k, v]) => `${k} ${(v * 100).toFixed(0)}%`).join(" · ") || "-"));
+      tr.appendChild(el("td", null, (stop.evidence.dropped_terms || []).join(", ") || "없음"));
+      tr.appendChild(el("td", null, stop.evidence.base_date || ""));
+      tr.appendChild(el("td", null, stop.evidence.confidence || ""));
+      table.appendChild(tr);
+    });
+    wrap.appendChild(table);
+
+    const dl = el("div", "actions");
+    (payload.data && payload.data.datasets ? payload.data.datasets : []).forEach((d) => {
+      const chip = el("span", "tag",
+        `id=${d.hub_id} ${d.dataset} · ${d.mode} · ${d.rows}행`);
+      dl.appendChild(chip);
+    });
+    wrap.appendChild(dl);
+
+    if (payload.notes && payload.notes.length) {
+      const notes = el("ul", "notes");
+      payload.notes.forEach((n) => notes.appendChild(el("li", null, n)));
+      wrap.appendChild(notes);
+    }
+    return wrap;
+  }
+
+  function renderActions(payload) {
+    const wrap = el("div", "actions");
+    const copy = el("button", "ghost", "카톡 공유용 텍스트 복사");
+    copy.addEventListener("click", async () => {
+      const text = shareText(payload);
+      try {
+        await navigator.clipboard.writeText(text);
+        toast("복사했습니다");
+      } catch (err) {
+        window.prompt("복사할 텍스트", text);
+      }
+    });
+    wrap.appendChild(copy);
+
+    const json = el("button", "ghost", "결과 JSON 내려받기");
+    json.addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = (payload.run_id || "binteum") + ".json";
+      a.click();
+    });
+    wrap.appendChild(json);
+
+    if (payload.outputs && payload.outputs.html) {
+      const info = el("span", "tag", "리포트: " + payload.outputs.html.split("/").pop());
+      wrap.appendChild(info);
+    }
+    return wrap;
+  }
+
+  function shareText(payload) {
+    const c = payload.constraints || {};
+    const plan = (payload.plans || []).find((p) => p.key === STATE.selected) || (payload.plans || [])[0];
+    const lines = [];
+    lines.push(`[빈틈] ${c.origin_emd || ""} · ${c.end_time}까지 · ${plan ? plan.label : ""}`);
+    if (!plan) return lines.join("\n");
+    plan.stops.forEach((stop) => {
+      lines.push(`${stop.order}. ${stop.arrive} ${stop.spot_name} — CI ${stop.ci}(${stop.ci_label}), ${stop.dwell_min}분`);
+    });
+    lines.push(`이동 ${plan.totals.travel_min}분 · 평균 CI ${plan.totals.avg_ci}`);
+    const ds = payload.data && payload.data.datasets ? payload.data.datasets : [];
+    lines.push("근거: " + ds.map((d) => `${d.dataset}(${d.mode})`).join(", "));
+    return lines.join("\n");
+  }
+
+  let toastTimer = null;
+  function toast(message) {
+    let node = document.querySelector(".toast");
+    if (!node) {
+      node = el("div", "toast");
+      document.body.appendChild(node);
+    }
+    node.textContent = message;
+    node.classList.add("on");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => node.classList.remove("on"), 1800);
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
+
+</script>
+</body>
+</html>

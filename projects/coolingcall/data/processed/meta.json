@@ -1,0 +1,87 @@
+{
+  "generated_from": {
+    "kma": "기상청 기상자료개방포털 기후통계분석 기온분석(지점 143 대구), 2015-01-01~2025-12-31",
+    "shelter": "대구광역시 자연재난과 무더위쉼터 현황표(2026)",
+    "population": "행정안전부 주민등록 인구통계 행정동별 연령별 인구(2026년 10월)"
+  },
+  "heat": {
+    "year": 2025,
+    "heat_days": 54,
+    "tropical_nights": 24,
+    "max_ta": 37.4,
+    "score": 74.0,
+    "series": {
+      "2015": {
+        "heat_days": 21,
+        "tropical_nights": 10,
+        "max_ta": 38.3
+      },
+      "2016": {
+        "heat_days": 32,
+        "tropical_nights": 12,
+        "max_ta": 38.1
+      },
+      "2017": {
+        "heat_days": 33,
+        "tropical_nights": 14,
+        "max_ta": 38.4
+      },
+      "2018": {
+        "heat_days": 40,
+        "tropical_nights": 26,
+        "max_ta": 39.2
+      },
+      "2019": {
+        "heat_days": 29,
+        "tropical_nights": 21,
+        "max_ta": 36.9
+      },
+      "2020": {
+        "heat_days": 31,
+        "tropical_nights": 14,
+        "max_ta": 37.0
+      },
+      "2021": {
+        "heat_days": 23,
+        "tropical_nights": 7,
+        "max_ta": 37.2
+      },
+      "2022": {
+        "heat_days": 45,
+        "tropical_nights": 25,
+        "max_ta": 37.8
+      },
+      "2023": {
+        "heat_days": 27,
+        "tropical_nights": 9,
+        "max_ta": 37.7
+      },
+      "2024": {
+        "heat_days": 53,
+        "tropical_nights": 33,
+        "max_ta": 37.2
+      },
+      "2025": {
+        "heat_days": 54,
+        "tropical_nights": 24,
+        "max_ta": 37.4
+      }
+    }
+  },
+  "params": {
+    "cap_full_per_1000": 300.0,
+    "weights": {
+      "heat": 0.3,
+      "vuln": 0.4,
+      "gap": 0.3
+    },
+    "heat_day_tmax": 33.0,
+    "tropical_night_tmin": 25.0
+  },
+  "counts": {
+    "shelters_raw": 1198,
+    "shelters_used": 1195,
+    "dongs": 150,
+    "dongs_with_pop": 150
+  }
+}
