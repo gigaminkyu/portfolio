@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>올림픽공원 주차 혼잡 예측·분산 안내 | KSPO&CO 공공데이터</title>
+<style>
+  :root{
+    --navy:#0E2A47; --navy2:#173D63; --ink:#16202B; --sub:#5C6B7A; --line:#E3E8EE;
+    --bg:#F5F7FA; --card:#FFFFFF; --blue:#2F6FEB; --sky:#8FB8F2;
+    --ok:#1E9E6A; --warn:#E8A33D; --bad:#E4572E; --full:#B4182D;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Noto Sans CJK KR","Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px 60px}
+  header{background:linear-gradient(110deg,var(--navy),#1B4C7E);color:#fff;padding:18px 0 22px}
+  header .wrap{display:flex;align-items:center;gap:18px;padding-bottom:0}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
+  .brand .dot{width:26px;height:26px;border-radius:7px;background:#fff;color:var(--navy);
+    display:grid;place-items:center;font-size:13px;font-weight:800}
+  .brand small{display:block;font-weight:400;opacity:.72;font-size:11px;letter-spacing:.4px}
+  header h1{font-size:21px;margin:0 0 2px;font-weight:700}
+  header .sub{font-size:12.5px;opacity:.78}
+  .hdr-right{margin-left:auto;text-align:right;font-size:11.5px;opacity:.8;line-height:1.7}
+  .hdr-right b{color:#FFD48A;font-weight:600}
+  .toolbar{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+    margin-top:-18px;box-shadow:0 8px 24px rgba(16,42,71,.07);position:relative;z-index:2}
+  .dates{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  .date{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 11px;
+    cursor:pointer;text-align:center;min-width:78px;transition:.15s;line-height:1.35}
+  .date:hover{border-color:var(--sky)}
+  .date.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .date .d1{font-size:12.5px;font-weight:700}
+  .date .d2{font-size:10.5px;opacity:.7}
+  .date .badge{display:inline-block;margin-top:3px;font-size:9.5px;padding:1px 5px;border-radius:20px;
+    background:#EAF1FE;color:var(--blue);font-weight:700}
+  .date.on .badge{background:rgba(255,255,255,.2);color:#fff}
+  .badge.b-ok{background:#E6F6EE;color:#1E9E6A}
+  .badge.b-warn{background:#FDF1DF;color:#9A6212}
+  .badge.b-bad{background:#FDEAE4;color:#E4572E}
+  .badge.b-full{background:#FBE3E7;color:#B4182D}
+  .times{margin-top:14px;display:flex;align-items:center;gap:14px}
+  .times label{font-size:12px;color:var(--sub);font-weight:600;white-space:nowrap}
+  input[type=range]{flex:1;accent-color:var(--blue);height:4px}
+  .clock{font-variant-numeric:tabular-nums;font-weight:800;font-size:19px;color:var(--navy);min-width:74px;text-align:right}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;
+    box-shadow:0 2px 8px rgba(16,42,71,.04)}
+  .k{font-size:11.5px;color:var(--sub);font-weight:600;letter-spacing:.2px}
+  .v{font-size:32px;font-weight:800;letter-spacing:-.5px;margin-top:6px;line-height:1.05;font-variant-numeric:tabular-nums}
+  .v small{font-size:14px;font-weight:600;color:var(--sub);margin-left:2px}
+  .cap{font-size:11.5px;color:var(--sub);margin-top:8px}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:9px}
+  .p-ok{background:#E6F6EE;color:var(--ok)} .p-warn{background:#FDF1DF;color:#9A6212}
+  .p-bad{background:#FDEAE4;color:var(--bad)} .p-full{background:#FBE3E7;color:var(--full)}
+  .row{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;margin-top:14px}
+  .sect{font-size:14px;font-weight:800;color:var(--navy);margin:0 0 2px}
+  .sect span{font-weight:500;color:var(--sub);font-size:11.5px;margin-left:6px}
+  .chartbox{position:relative}
+  svg{display:block;width:100%;height:auto}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--sub);margin-top:8px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .gates{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .gate{border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:#fff}
+  .gate.best{border-color:var(--ok);background:#F4FBF7}
+  .gate h4{margin:0;font-size:13px;display:flex;align-items:center;gap:6px}
+  .gate .num{font-size:20px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}
+  .bar{height:6px;border-radius:6px;background:#EDF1F6;margin-top:7px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--blue)}
+  .gate.best .bar i{background:var(--ok)}
+  .gate p{margin:7px 0 0;font-size:11px;color:var(--sub);line-height:1.5}
+  .tagbest{font-size:9.5px;font-weight:800;background:var(--ok);color:#fff;padding:1px 6px;border-radius:20px}
+  .evlist{margin-top:10px;display:flex;flex-direction:column;gap:9px}
+  .ev{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff}
+  .ev .t{font-size:12.5px;font-weight:700;line-height:1.35}
+  .ev .m{font-size:11px;color:var(--sub);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+  .ev .m b{color:var(--navy);font-weight:700}
+  .advice{margin-top:12px;background:#F1F6FF;border:1px solid #D6E4FB;border-radius:11px;padding:12px 13px}
+  .advice h4{margin:0 0 6px;font-size:12.5px;color:var(--navy)}
+  .advice ul{margin:0;padding-left:16px;font-size:11.5px;color:#33475B;line-height:1.75}
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+  .fact b{display:block;font-size:19px;color:var(--navy);font-variant-numeric:tabular-nums}
+  .fact span{font-size:11px;color:var(--sub)}
+  footer{margin-top:22px;font-size:10.8px;color:var(--sub);line-height:1.75}
+  footer b{color:var(--ink)}
+  .strip{margin-top:16px;background:var(--navy);color:#fff;border-radius:12px;padding:12px 16px;
+    display:flex;gap:18px;font-size:11.5px;align-items:center;flex-wrap:wrap}
+  .strip b{color:#FFD48A}
+  .note{font-size:10.5px;color:var(--sub);margin-top:6px}
+  @media (max-width:640px){
+    header .wrap{flex-wrap:wrap;gap:8px}
+    .brand small{display:none}
+    header h1{font-size:15.5px;line-height:1.3}
+    header .sub{font-size:11px}
+    .hdr-right{display:none}
+    .date{min-width:64px;padding:6px 8px}
+    .date .d1{font-size:11.5px}
+  }
+  @media (max-width:900px){
+    .grid,.facts{grid-template-columns:repeat(2,1fr)}
+    .row{grid-template-columns:1fr}
+    .gates{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><div class="dot">K</div><div>KSPO&amp;CO<small>PUBLIC DATA</small></div></div>
+    <div>
+      <h1>올림픽공원 주차 혼잡 예측 · 분산 안내</h1>
+      <div class="sub">공연·날씨·입출차 데이터를 연계해 시간대별 주차 혼잡을 미리 알려드립니다</div>
+    </div>
+    <div class="hdr-right">
+      데모 v1.0 · 정적 프로토타입<br>
+      학습 데이터 <b>2024년 7월 입출차 215,528건</b>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="toolbar">
+    <div class="dates" id="dateRow"></div>
+    <div class="times">
+      <label>시간대</label>
+      <input type="range" id="hour" min="5" max="23" step="1" value="17">
+      <div class="clock" id="clock">17:00</div>
+    </div>
+    <div class="note" id="dayNote"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="k">선택 시각 예상 점유율</div>
+      <div class="v" id="occPct">–<small>%</small></div>
+      <div class="pill" id="grade">–</div>
+      <div class="cap">2,200대(동2문·남2문·북2문) 기준</div>
+    </div>
+    <div class="card">
+      <div class="k">예상 재실 차량</div>
+      <div class="v" id="occN">–<small>대</small></div>
+      <div class="cap" id="occFree">–</div>
+    </div>
+    <div class="card">
+      <div class="k">당일 최대 혼잡</div>
+      <div class="v" id="peakT">–</div>
+      <div class="cap" id="peakPct">–</div>
+    </div>
+    <div class="card">
+      <div class="k">추천 입차 게이트</div>
+      <div class="v" style="font-size:24px" id="bestGate">–</div>
+      <div class="cap" id="bestWhy">–</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <div class="sect">시간대별 예상 점유율 <span>실선 예측 · 음영 신뢰구간 ±12%</span></div>
+      <div class="chartbox"><svg id="chart" viewBox="0 0 760 300" preserveAspectRatio="none"></svg></div>
+      <div class="legend">
+        <div><i style="background:#2F6FEB"></i>예상 점유율</div>
+        <div><i style="background:#8FB8F2;opacity:.5"></i>예측 신뢰구간</div>
+        <div><i style="background:#E4572E"></i>만차 위험(90%)</div>
+        <div><i style="background:#0E2A47"></i>공연 시작</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sect">게이트별 분산 안내 <span>선택 시각 기준</span></div>
+      <div class="gates" id="gates"></div>
+      <div class="advice" id="advice"></div>
+    </div>
+  </div>
+
+  <div class="row" style="grid-template-columns:1fr 1fr">
+    <div class="card">
+      <div class="sect">이 날의 공연·행사 <span>기관 공연일정 데이터</span></div>
+      <div class="evlist" id="events"></div>
+    </div>
+    <div class="card">
+      <div class="sect">예측은 이렇게 만듭니다</div>
+      <div style="font-size:12px;color:#33475B;line-height:1.8;margin-top:8px">
+        <div>① <b>기저 수요</b> — 요일·시간대별 평균 재실 차량(실측 31일)</div>
+        <div>② <b>공연 수요</b> — 공연장 좌석규모 × 시간대 계수(1,000석당 최대 20대)</div>
+        <div>③ <b>관객 성향 보정</b> — 중장년 콘서트는 자가용 전환율 가중(×4.6)</div>
+        <div>④ <b>날씨 보정</b> — 강수 시 기저 수요 −3%</div>
+      </div>
+      <div class="cap" style="margin-top:12px">자체검증(2024년 7월 31일): 일 최대 점유율 오차 평균
+        <b id="mape">13.9%</b>, ±15% 이내 적중 <b id="hit">68%</b></div>
+      <div class="cap">데이터가 쌓일수록 계수를 다시 계산하는 구조라 운영자 없이 정확도가 올라갑니다.</div>
+    </div>
+  </div>
+
+  <div class="facts">
+    <div class="card fact"><b id="f1">215,528</b><span>2024년 7월 입출차 실측 건수</span></div>
+    <div class="card fact"><b id="f2">2,228</b><span>관측된 최대 재실 차량(2024-07-21 16:40)</span></div>
+    <div class="card fact"><b id="f3">+41%</b><span>KSPO DOME 공연 시작 2시간 전 입차 증가</span></div>
+    <div class="card fact"><b id="f4">74분</b><span>평균 주차 체류시간(중위)</span></div>
+  </div>
+
+  <div class="strip">
+    <div><b>운영 구조</b> 정적 호스팅 + 공공 API 직접 호출 → 운영자 없는 상시 서비스(2028년까지 유지 가능)</div>
+    <div>공연정보 API · 실시간 주차현황 API · 기상청 단기예보 API · 월별주차현황</div>
+  </div>
+
+  <footer>
+    <b>출처</b> 한국체육산업개발(주) 「올림픽공원 입출차 정보」(2024.07, 파일데이터 15138735) · 「올림픽공원 공연정보」 ·
+    「월별주차현황」(15131671) · 「실시간 주차현황」(15168686) · 올림픽공원 공연/행사 일정 · 기상청 단기예보.
+    분석 단계의 날씨는 기상청 API 키 발급 전이라 ERA5 재분석(Open-Meteo)으로 대체했습니다.
+    본 화면은 공모전 제출용 정적 프로토타입이며, 실시간 값은 실제 서비스에서 API로 대체됩니다.
+    게이트별 배분율은 공연장 최근접 주차장 용량(P1 562·P2 320·P4 117·P5 176·P6 167·P7 137대)을 바탕으로 한 추정치입니다.
+  </footer>
+</div>
+
+<script id="payload" type="application/json">{"meta": {"updated": "2026-11-19", "cap": 2200, "sources": ["한국체육산업개발(주) 올림픽공원 입출차 정보(2024.07, 215,528건)", "한국체육산업개발(주) 올림픽공원 공연/행사 일정", "한국체육산업개발(주) 월별주차현황(2023~2025)", "기상청 단기예보(서비스 연동 예정) / 분석 시 ERA5 재분석 대체", "한국체육산업개발(주) 실시간 주차현황(동2문·남2문·북2문)"]}, "baseOcc": {"wd": {"0": 57.0, "1": 56.0, "2": 56.0, "3": 57.0, "4": 75.0, "5": 392.0, "6": 629.0, "7": 562.0, "8": 687.0, "9": 947.0, "10": 998.0, "11": 955.0, "12": 730.0, "13": 700.0, "14": 739.0, "15": 730.0, "16": 661.0, "17": 573.0, "18": 588.0, "19": 651.0, "20": 642.0, "21": 564.0, "22": 223.0, "23": 69.0}, "we": {"0": 57.0, "1": 49.0, "2": 49.0, "3": 42.0, "4": 47.0, "5": 63.0, "6": 95.0, "7": 131.0, "8": 307.0, "9": 580.0, "10": 717.0, "11": 703.0, "12": 677.0, "13": 695.0, "14": 854.0, "15": 903.0, "16": 897.0, "17": 755.0, "18": 479.0, "19": 343.0, "20": 340.0, "21": 247.0, "22": 56.0, "23": 46.0}}, "upliftPerK": {"0": 0.987, "1": 1.031, "2": 0.932, "3": 1.096, "4": 1.071, "5": 1.303, "6": 2.16, "7": 2.335, "8": 4.891, "9": 4.408, "10": 5.252, "11": 5.536, "12": 4.987, "13": 4.781, "14": 5.062, "15": 6.634, "16": 10.148, "17": 14.128, "18": 17.022, "19": 17.238, "20": 14.596, "21": 8.372, "22": 5.729, "23": 1.831}, "venues": {"02": {"name": "KSPO DOME", "cap": 15000}, "01": {"name": "올림픽홀", "cap": 2700}, "03": {"name": "핸드볼경기장", "cap": 5000}, "04": {"name": "우리금융아트홀", "cap": 1000}, "07": {"name": "뮤즈라이브", "cap": 400}, "05": {"name": "K-아트홀", "cap": 300}, "06": {"name": "야외(88잔디마당)", "cap": 8000}}, "lots": {"P1": 562, "P2": 320, "P4": 117, "P5": 176, "P6": 167, "P7": 137, "P11": 190}, "gates": {"동2문": "P1·P2·P4·P5", "남2문": "P1·P2·P7", "북2문": "P4·P5·P6"}, "events": [{"date": "2026-11-21", "title": "미스터트롯 콘서트", "venue": "올림픽홀", "plcCd": "01", "starts": [780], "price": "", "car_factor": 4.6}, {"date": "2026-11-21", "title": "산타와 빈양말", "venue": "체조경기장(KSPO DOME)", "plcCd": "02", "starts": [840], "price": "", "car_factor": 1.0}, {"date": "2026-11-21", "title": "2026-27 로이킴 LIVE TOUR ［R:O:Y］ in SEOUL", "venue": "KSPO DOME", "plcCd": "02", "starts": [1140], "price": "VIP석 165,000원 R석 154,000원", "car_factor": 1.0}, {"date": "2026-11-22", "title": "2026-27 로이킴 LIVE TOUR ［R:O:Y］ in SEOUL", "venue": "KSPO DOME", "plcCd": "02", "starts": [1140], "price": "VIP석 165,000원 R석 154,000원", "car_factor": 1.0}, {"date": "2026-11-27", "title": "[서울] 2026 조용필 ＆ 위대한탄생 콘서트", "venue": "KSPO DOME", "plcCd": "02", "starts": [1140], "price": "VIP석 176,000원 R석 165,000원 S석 143,000원 A석 110,000원", "car_factor": 4.6}, {"date": "2026-11-28", "title": "[서울] 2026 조용필 ＆ 위대한탄생 콘서트", "venue": "KSPO DOME", "plcCd": "02", "starts": [1140], "price": "VIP석 176,000원 R석 165,000원 S석 143,000원 A석 110,000원", "car_factor": 4.6}, {"date": "2026-11-28", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-11-29", "title": "[서울] 2026 조용필 ＆ 위대한탄생 콘서트", "venue": "KSPO DOME", "plcCd": "02", "starts": [1140], "price": "VIP석 176,000원 R석 165,000원 S석 143,000원 A석 110,000원", "car_factor": 4.6}, {"date": "2026-11-29", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-01", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-02", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-03", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-04", "title": "[서울] 2026 이승철 40주년 콘서트 [THE VOICE: LEE SEUNG CHUL]", "venue": "KSPO DOME", "plcCd": "02", "starts": [1140], "price": "FS석 198,000원 VIP석 187,000원 R석 165,000원", "car_factor": 4.6}, {"date": "2026-12-04", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-05", "title": "2026 비 (RAIN) CONCERT [THE SMOKE]", "venue": "올림픽홀", "plcCd": "01", "starts": [1140], "price": "VVIP석 198,000원 VIP석 165,000원 R석 143,000원 S석 110,000원", "car_factor": 1.0}, {"date": "2026-12-05", "title": "[서울] 2026 이승철 40주년 콘서트 [THE VOICE: LEE SEUNG CHUL]", "venue": "KSPO DOME", "plcCd": "02", "starts": [1140], "price": "FS석 198,000원 VIP석 187,000원 R석 165,000원", "car_factor": 4.6}, {"date": "2026-12-05", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-06", "title": "2026 비 (RAIN) CONCERT [THE SMOKE]", "venue": "올림픽홀", "plcCd": "01", "starts": [1140], "price": "VVIP석 198,000원 VIP석 165,000원 R석 143,000원 S석 110,000원", "car_factor": 1.0}, {"date": "2026-12-06", "title": "[서울] 2026 이승철 40주년 콘서트 [THE VOICE: LEE SEUNG CHUL]", "venue": "KSPO DOME", "plcCd": "02", "starts": [1140], "price": "FS석 198,000원 VIP석 187,000원 R석 165,000원", "car_factor": 4.6}, {"date": "2026-12-06", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-08", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-09", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-10", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-11", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-12", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-13", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-15", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-16", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-17", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-18", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-19", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-20", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-22", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-23", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-24", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-25", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-26", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-27", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-29", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-30", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2026-12-31", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2027-01-01", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2027-01-02", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}, {"date": "2027-01-03", "title": "최현우 30주년 기념 공연 - LEGACY", "venue": "우리금융아트홀", "plcCd": "04", "starts": [1170, 900, 1140, 840], "price": "VIP석 110,000원 R석 99,000원 S석 77,000원", "car_factor": 1.5}], "july": [{"date": "2024-07-01", "entries": 7131, "seats": 0.0, "peak_occ": 968.0, "precip_sum": 0.1, "tmax": 29.5, "dow": 0}, {"date": "2024-07-02", "entries": 6594, "seats": 1200.0, "peak_occ": 946.0, "precip_sum": 35.300000000000004, "tmax": 24.7, "dow": 1}, {"date": "2024-07-03", "entries": 6987, "seats": 1200.0, "peak_occ": 1022.0, "precip_sum": 5.699999999999999, "tmax": 27.1, "dow": 2}, {"date": "2024-07-04", "entries": 6974, "seats": 1200.0, "peak_occ": 984.0, "precip_sum": 0.9, "tmax": 29.5, "dow": 3}, {"date": "2024-07-05", "entries": 6832, "seats": 1200.0, "peak_occ": 1006.0, "precip_sum": 1.5000000000000004, "tmax": 25.1, "dow": 4}, {"date": "2024-07-06", "entries": 6253, "seats": 16600.0, "peak_occ": 947.0, "precip_sum": 24.6, "tmax": 30.2, "dow": 5}, {"date": "2024-07-07", "entries": 4984, "seats": 6600.0, "peak_occ": 903.0, "precip_sum": 13.400000000000002, "tmax": 27.2, "dow": 6}, {"date": "2024-07-08", "entries": 6779, "seats": 0.0, "peak_occ": 1001.0, "precip_sum": 46.199999999999996, "tmax": 24.7, "dow": 0}, {"date": "2024-07-09", "entries": 7239, "seats": 1200.0, "peak_occ": 1056.0, "precip_sum": 12.399999999999999, "tmax": 26.8, "dow": 1}, {"date": "2024-07-10", "entries": 6951, "seats": 1200.0, "peak_occ": 972.0, "precip_sum": 20.099999999999998, "tmax": 29.9, "dow": 2}, {"date": "2024-07-11", "entries": 7215, "seats": 1200.0, "peak_occ": 991.0, "precip_sum": 0.7, "tmax": 27.7, "dow": 3}, {"date": "2024-07-12", "entries": 8615, "seats": 16200.0, "peak_occ": 985.0, "precip_sum": 0.1, "tmax": 30.3, "dow": 4}, {"date": "2024-07-13", "entries": 7630, "seats": 36600.0, "peak_occ": 1126.0, "precip_sum": 6.8, "tmax": 31.5, "dow": 5}, {"date": "2024-07-14", "entries": 6573, "seats": 36600.0, "peak_occ": 926.0, "precip_sum": 0.6, "tmax": 30.4, "dow": 6}, {"date": "2024-07-15", "entries": 7103, "seats": 0.0, "peak_occ": 1058.0, "precip_sum": 0.30000000000000004, "tmax": 30.9, "dow": 0}, {"date": "2024-07-16", "entries": 6676, "seats": 6200.0, "peak_occ": 1032.0, "precip_sum": 41.4, "tmax": 30.2, "dow": 1}, {"date": "2024-07-17", "entries": 6499, "seats": 6200.0, "peak_occ": 970.0, "precip_sum": 61.400000000000006, "tmax": 26.7, "dow": 2}, {"date": "2024-07-18", "entries": 6438, "seats": 6200.0, "peak_occ": 952.0, "precip_sum": 67.39999999999999, "tmax": 25.8, "dow": 3}, {"date": "2024-07-19", "entries": 7327, "seats": 6200.0, "peak_occ": 1076.0, "precip_sum": 2.2, "tmax": 29.7, "dow": 4}, {"date": "2024-07-20", "entries": 7914, "seats": 41600.0, "peak_occ": 2028.0, "precip_sum": 22.5, "tmax": 29.7, "dow": 5}, {"date": "2024-07-21", "entries": 7797, "seats": 41600.0, "peak_occ": 2228.0, "precip_sum": 7.199999999999999, "tmax": 29.4, "dow": 6}, {"date": "2024-07-22", "entries": 6812, "seats": 0.0, "peak_occ": 960.0, "precip_sum": 15.0, "tmax": 28.4, "dow": 0}, {"date": "2024-07-23", "entries": 6650, "seats": 6200.0, "peak_occ": 931.0, "precip_sum": 21.900000000000002, "tmax": 27.0, "dow": 1}, {"date": "2024-07-24", "entries": 6726, "seats": 6200.0, "peak_occ": 966.0, "precip_sum": 4.2, "tmax": 30.6, "dow": 2}, {"date": "2024-07-25", "entries": 6741, "seats": 6200.0, "peak_occ": 992.0, "precip_sum": 3.6000000000000005, "tmax": 31.8, "dow": 3}, {"date": "2024-07-26", "entries": 6938, "seats": 6200.0, "peak_occ": 1027.0, "precip_sum": 14.499999999999998, "tmax": 32.9, "dow": 4}, {"date": "2024-07-27", "entries": 7333, "seats": 36200.0, "peak_occ": 1054.0, "precip_sum": 19.700000000000003, "tmax": 31.4, "dow": 5}, {"date": "2024-07-28", "entries": 6918, "seats": 36200.0, "peak_occ": 1162.0, "precip_sum": 0.30000000000000004, "tmax": 31.4, "dow": 6}, {"date": "2024-07-29", "entries": 6625, "seats": 0.0, "peak_occ": 921.0, "precip_sum": 0.8999999999999999, "tmax": 28.7, "dow": 0}, {"date": "2024-07-30", "entries": 7143, "seats": 6200.0, "peak_occ": 1059.0, "precip_sum": 1.1, "tmax": 31.1, "dow": 1}, {"date": "2024-07-31", "entries": 7131, "seats": 6200.0, "peak_occ": 1087.0, "precip_sum": 0.30000000000000004, "tmax": 32.1, "dow": 2}], "stats": {"overall": {"rows": 215528, "days": 31, "entries_per_day_mean": 6952.5161290322585, "entries_per_day_median": 6938.0, "entries_per_day_max": 8615, "entries_per_day_max_date": "2024-07-12", "entries_per_day_min": 4984, "entries_per_day_min_date": "2024-07-07", "weekday_mean": 6962.0, "weekend_mean": 6925.25, "dwell_median_min": 74.0, "dwell_mean_min": 98.70529583163209, "dwell_p90_min": 197.0, "long_stay_gt24h_pct": 0.14383281986563232, "peak_occ_mean": 1075.3548387096773, "peak_occ_max": 2228, "peak_occ_max_date": "2024-07-21", "peak_occ_max_time": "16:40", "peak_occ_max_pct": 101.27272727272727, "days_over_90pct": 2, "days_over_80pct": 2, "cap": 2200}, "compare": {"all": 6952.5161290322585, "no_event": {"n": 5, "mean": 6890.0}, "any_event": {"n": 26, "mean": 6964.538461538462}, "dome_day": {"n": 7, "mean": 7540.0}, "no_dome": {"n": 24, "mean": 6781.166666666667}, "big_seats_ge10k": {"n": 8, "mean": 7379.125}, "rain_day": {"n": 22, "mean": 6874.681818181818}, "dry_day": {"n": 9, "mean": 7142.777777777777}, "hot_day_33": {"n": 0, "mean": null}}, "regression": {"intercept": 6837.9574125029885, "weekend": -1868.3312773075227, "per_1000seats": 66.39391231647654, "rain": -181.04583088598088, "r2": 0.6300504738434995, "n": 31}, "dome_pre2h": 1748.2, "base_window": 1243.7, "big_days": [{"date": "2024-07-06 00:00:00", "seats": 16600.0, "peak_occ": 947, "uplift_at_peak": 343, "precip": 24.6}, {"date": "2024-07-12 00:00:00", "seats": 16200.0, "peak_occ": 985, "uplift_at_peak": 357, "precip": 0.1}, {"date": "2024-07-13 00:00:00", "seats": 36600.0, "peak_occ": 1126, "uplift_at_peak": 492, "precip": 6.8}, {"date": "2024-07-14 00:00:00", "seats": 36600.0, "peak_occ": 926, "uplift_at_peak": 386, "precip": 0.6}, {"date": "2024-07-20 00:00:00", "seats": 41600.0, "peak_occ": 2028, "uplift_at_peak": 1383, "precip": 22.5}, {"date": "2024-07-21 00:00:00", "seats": 41600.0, "peak_occ": 2228, "uplift_at_peak": 1494, "precip": 7.199999999999999}, {"date": "2024-07-27 00:00:00", "seats": 36200.0, "peak_occ": 1054, "uplift_at_peak": 351, "precip": 19.700000000000003}, {"date": "2024-07-28 00:00:00", "seats": 36200.0, "peak_occ": 1162, "uplift_at_peak": 367, "precip": 0.30000000000000004}], "model_check": {"mape": 5.5, "rmse": 81.0, "within15": 97.0, "within20": 97.0, "n": 31, "k": 20}}}</script>
+<script>
+const D = JSON.parse(document.getElementById('payload').textContent);
+const CAP = D.meta.cap;
+const V = D.venues;
+
+/* ---------- 예측 엔진 ---------- */
+const GATE_SHARE = {'동2문':0.45, '남2문':0.33, '북2문':0.22};
+const GATE_CAP = {'동2문':990, '남2문':726, '북2문':484};
+const VENUE_PULL = {'02':{'동2문':1.05,'북2문':1.25,'남2문':0.70},
+                    '01':{'동2문':1.15,'남2문':0.95,'북2문':0.65},
+                    '03':{'동2문':0.95,'북2문':1.05,'남2문':1.00},
+                    '04':{'남2문':1.30,'동2문':0.85,'북2문':0.65},
+                    '07':{'동2문':1.10,'남2문':0.95,'북2문':0.80}};
+function gateWeights(h){
+  const w={'동2문':GATE_SHARE['동2문'],'남2문':GATE_SHARE['남2문'],'북2문':GATE_SHARE['북2문']};
+  for(const e of eventsOf(sel)) for(const st of e.starts){
+    const hh=st/60, pull=VENUE_PULL[e.plcCd];
+    if(!pull || Math.abs(h-Math.round(hh))>2) continue;
+    const k=(e.car_factor||1);
+    for(const g in w) w[g]*= (1 + 0.30*k*(pull[g]-0.85));
+  }
+  return w;
+}
+function splitGates(v,h){
+  const w=gateWeights(h), sum=Object.values(w).reduce((a,b)=>a+b,0);
+  return Object.entries(w).map(([g,x])=>[g, v*x/sum]);
+}
+const GATE_LOTS = {'동2문':'P1·P2·P4·P5 (1,175대)', '남2문':'P7·P1·P2 (1,019대)', '북2문':'P4·P5·P6 (460대)'};
+const K = 20;                       // 1,000석당 최대 재실 기여(대) — 2024-07 보정(자체검증)
+function kernel(off){               // 공연 시작 대비 시간 오프셋별 재실 비중
+  if(off<=-4||off>7) return 0;
+  const m={'-3':0.15,'-2':0.55,'-1':0.90,'0':1.0,'1':1.0,'2':0.95,'3':0.70,'4':0.38,'5':0.15,'6':0.05,'7':0.02};
+  return m[String(off)]||0;
+}
+function eventsOf(date){return D.events.filter(e=>e.date===date);}
+function forecast(date, rain=false){
+  const dow=new Date(date+'T00:00:00').getDay();
+  const base=(dow===0||dow===6)?D.baseOcc.we:D.baseOcc.wd;
+  const wf=rain?0.97:1.0;
+  const evs=eventsOf(date);
+  const out=[];
+  for(let h=0;h<24;h++){
+    let v=(base[String(h)]||0)*wf;
+    for(const e of evs){
+      const cap=(V[e.plcCd]||{}).cap||0;
+      const seats=cap*0.92;
+      for(const st of e.starts){
+        const off=h-Math.round(st/60);
+        v += (seats/1000)*K*(e.car_factor||1)*kernel(off);
+      }
+    }
+    out.push(Math.min(v, 2600));
+  }
+  return out;
+}
+/* ---------- 상태 ---------- */
+function range(a,b){const out=[];let d=new Date(a+'T00:00:00');const e=new Date(b+'T00:00:00');
+  while(d<=e){out.push(d.toISOString().slice(0,10));d=new Date(d.getTime()+86400000);}return out;}
+const evDates=D.events.map(e=>e.date).sort();
+const dates=range(evDates[0],evDates[evDates.length-1]);
+const qs=new URLSearchParams(location.search);
+let sel=(qs.get('d')&&evDates.includes(qs.get('d')))?qs.get('d'):'2026-11-21';
+let hour=qs.get('h')?Math.max(5,Math.min(23,+qs.get('h'))):(sel==='2026-11-28'?16:17);
+const WD=['일','월','화','수','목','금','토'];
+const fmt=d=>{const x=new Date(d+'T00:00:00');return `${+d.slice(5,7)}.${+d.slice(8,10)} (${WD[x.getDay()]})`;};
+
+function grade(p){
+  if(p>=90) return ['만차 위험','p-full'];
+  if(p>=70) return ['혼잡','p-bad'];
+  if(p>=50) return ['다소 혼잡','p-warn'];
+  return ['여유','p-ok'];
+}
+/* ---------- 렌더 ---------- */
+function renderDates(){
+  document.getElementById('dateRow').innerHTML=dates.map(d=>{
+    const n=eventsOf(d).length;
+    const pk=Math.max(...forecast(d))/CAP*100;
+    const tag = pk>=90?'만차 위험':(pk>=70?'혼잡 예상':(pk>=50?'다소 혼잡':'여유'));
+    const cls = pk>=90?'b-full':(pk>=70?'b-bad':(pk>=50?'b-warn':'b-ok'));
+    return `<div class="date ${d===sel?'on':''}" data-d="${d}">
+      <div class="d1">${fmt(d)}</div>
+      <div class="d2">${n?`공연 ${n}건`:'공연 없음'}</div>
+      <span class="badge ${cls}">${tag}</span>
+    </div>`;}).join('');
+  document.querySelectorAll('.date').forEach(el=>el.onclick=()=>{sel=el.dataset.d;render();});
+}
+function renderChart(f){
+  const W=760,H=300,ML=34,MR=10,MT=16,MB=26;
+  const iw=W-ML-MR, ih=H-MT-MB;
+  const x=h=>ML+iw*h/23, y=v=>MT+ih*(1-Math.min(v,2400)/2400);
+  let g='';
+  // grids
+  for(const t of [0,600,1200,1800,2400]){
+    g+=`<line x1="${ML}" x2="${W-MR}" y1="${y(t)}" y2="${y(t)}" stroke="#EDF1F6"/>`;
+    g+=`<text x="${ML-6}" y="${y(t)+3}" font-size="9" fill="#8D99AE" text-anchor="end">${t===0?'0':(t/1000)+'천'}</text>`;
+  }
+  for(let h=5;h<=23;h+=3){g+=`<text x="${x(h)}" y="${H-8}" font-size="9" fill="#8D99AE" text-anchor="middle">${h}시</text>`;}
+  // band
+  const up=f.map((v,h)=>`${x(h)},${y(v*1.12)}`).join(' ');
+  const dn=f.map((v,h)=>`${x(h)},${y(v*0.88)}`).reverse().join(' ');
+  g+=`<polygon points="${up} ${dn}" fill="#8FB8F2" opacity=".28"/>`;
+  // area+line
+  let path=f.map((v,h)=>`${h?'L':'M'}${x(h)},${y(v)}`).join(' ');
+  g+=`<path d="${path} L${x(23)},${y(0)} L${x(0)},${y(0)} Z" fill="#2F6FEB" opacity=".10"/>`;
+  g+=`<path d="${path}" fill="none" stroke="#2F6FEB" stroke-width="2.4"/>`;
+  // 90% line
+  g+=`<line x1="${ML}" x2="${W-MR}" y1="${y(CAP*0.9)}" y2="${y(CAP*0.9)}" stroke="#E4572E" stroke-width="1.4" stroke-dasharray="5 4"/>`;
+  g+=`<text x="${W-MR-2}" y="${y(CAP*0.9)-4}" font-size="9" fill="#E4572E" text-anchor="end">만차 기준 90% (${Math.round(CAP*0.9).toLocaleString()}대)</text>`;
+  // event markers
+  const marks=[];
+  for(const e of eventsOf(sel)) for(const st of e.starts) marks.push({min:st,e});
+  marks.sort((a,b)=>a.min-b.min);
+  marks.forEach((m,i)=>{
+    const hh=m.min/60;
+    if(hh<0||hh>24) return;
+    const tx=Math.min(Math.max(x(hh)+3, 58), 700);
+    const lbl=`${((V[m.e.plcCd]||{}).name||'').replace('KSPO DOME','DOME').replace('우리금융아트홀','우리금융')} ${String(Math.floor(hh)).padStart(2,'0')}:${String(m.min%60).padStart(2,'0')}`;
+    g+=`<line x1="${x(hh)}" x2="${x(hh)}" y1="${MT+24}" y2="${H-MB}" stroke="#0E2A47" stroke-width="1" stroke-dasharray="2 3" opacity=".5"/>`;
+    g+=`<text x="${tx}" y="${MT+9+(i%2)*11}" font-size="8.5" fill="#0E2A47">${lbl}</text>`;
+  });
+  // selected hour
+  const v=f[hour];
+  g+=`<line x1="${x(hour)}" x2="${x(hour)}" y1="${MT}" y2="${H-MB}" stroke="#173D63" stroke-width="1" opacity=".45"/>`;
+  g+=`<circle cx="${x(hour)}" cy="${y(v)}" r="4.5" fill="#fff" stroke="#2F6FEB" stroke-width="2.5"/>`;
+  document.getElementById('chart').innerHTML=g;
+}
+function render(){
+  const f=forecast(sel);
+  renderDates();
+  renderChart(f);
+  const v=f[hour], pct=v/CAP*100;
+  const [gt,cls]=grade(pct);
+  document.getElementById('occPct').innerHTML=pct.toFixed(0)+'<small>%</small>';
+  const gEl=document.getElementById('grade'); gEl.className='pill '+cls; gEl.textContent=gt;
+  document.getElementById('occN').innerHTML=Math.round(v).toLocaleString()+'<small>대</small>';
+  document.getElementById('occFree').textContent=`남은 주차면 약 ${Math.max(0,Math.round(CAP-v)).toLocaleString()}대`;
+  const pi=f.indexOf(Math.max(...f));
+  document.getElementById('peakT').textContent=`${pi}:00`;
+  document.getElementById('peakPct').textContent=`예상 ${ (Math.max(...f)/CAP*100).toFixed(0)}% · ${grade(Math.max(...f)/CAP*100)[0]}`;
+  document.getElementById('clock').textContent=String(hour).padStart(2,'0')+':00';
+
+  // 게이트
+  const shares=splitGates(v,hour);
+  const util=(o)=>o[1]/GATE_CAP[o[0]];
+  const best=shares.slice().sort((a,b)=>util(a)-util(b))[0][0];
+  document.getElementById('bestGate').textContent=best;
+  document.getElementById('bestWhy').textContent=`예상 ${Math.round(shares.find(s=>s[0]===best)[1]).toLocaleString()}대 · 가장 여유`;
+  document.getElementById('gates').innerHTML=shares.map(([k,n])=>{
+    const p=Math.min(100, n/GATE_CAP[k]*100);
+    const st=grade(p);
+    return `<div class="gate ${k===best?'best':''}">
+      <h4>${k} ${k===best?'<span class="tagbest">추천</span>':''}</h4>
+      <div class="num">${Math.round(n).toLocaleString()}<span style="font-size:12px;color:#5C6B7A">대</span></div>
+      <div class="bar"><i style="width:${p}%"></i></div>
+      <p>${GATE_LOTS[k]}<br>${st[0]} · 점유 ${p.toFixed(0)}% (수용 ${GATE_CAP[k].toLocaleString()}대)</p></div>`;}).join('');
+
+  const evs=eventsOf(sel);
+  let tips=[];
+  if(pct>=90) tips.push(`선택 시각은 <b>만차 위험</b>입니다. ${best} 방향으로 우회하거나 지하철 5·9호선 올림픽공원역(도보 3~8분)을 이용하세요.`);
+  else if(pct>=70) tips.push(`혼잡 시간대입니다. ${best}으로 진입하면 대기 ${Math.max(3,Math.round((pct-70)/6))}분 정도로 예상됩니다.`);
+  else if(pct>=50) tips.push(`다소 혼잡합니다. ${best} 진입이 상대적으로 수월합니다.`);
+  else tips.push(`현재는 여유가 있습니다. ${best} 진입을 권장합니다.`);
+  if(evs.length) tips.push(`공연 시작 <b>1~2시간 전</b>에 입차가 집중됩니다. 도착 목표를 ${Math.max(0,hour-2)}시 이전으로 잡으세요.`);
+  tips.push(`주차요금은 10분당 600원·일 최대 20,000원입니다. 공연 관람 할인은 없습니다.`);
+  document.getElementById('advice').innerHTML=`<h4>지금 안내</h4><ul>${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`;
+
+  document.getElementById('events').innerHTML= evs.length? evs.map(e=>{
+    const st=e.starts[0]; const hh=Math.floor(st/60), mm=st%60;
+    return `<div class="ev"><div class="t">${e.title}</div>
+      <div class="m"><span>${(V[e.plcCd]||{}).name||''}</span><span><b>${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}</b> 시작</span>
+      <span>권장 도착 ${String(Math.max(9,hh-2)).padStart(2,'0')}:00 이전</span>
+      <span>자가용 가중 ×${(e.car_factor||1).toFixed(1)}</span></div></div>`;}).join('')
+    : `<div class="ev"><div class="t" style="font-weight:600;color:#5C6B7A">이 날은 예정된 공연이 없습니다.</div>
+       <div class="m">기저 수요만으로 예측합니다.</div></div>`;
+
+  document.getElementById('dayNote').textContent=
+    `${fmt(sel)} · 공연 ${evs.length}건 · ${(new Date(sel+'T00:00:00').getDay()%6===0)?'주말':'평일'} 기준 예측`;
+  document.getElementById('mape').textContent=(D.stats.model_check.mape)+'%';
+  document.getElementById('hit').textContent=(D.stats.model_check.within15)+'%';
+}
+document.getElementById('hour').addEventListener('input',e=>{hour=+e.target.value;render();});
+render();
+</script>
+</body>
+</html>
