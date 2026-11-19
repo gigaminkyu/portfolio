@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>빈틈(BinTeum) — 실행 결과 리포트</title>
+<style>
+:root{
+  --ink:#1b2430; --ink-soft:#4a5768; --muted:#8a97a8;
+  --sand:#f6f3ec; --card:#ffffff; --line:#e4dfd3; --teal:#0f7d76; --amber:#c47f17;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sand);color:var(--ink);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,-apple-system,sans-serif;
+  line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:56px 20px 72px}
+.tag{display:inline-block;font-size:12px;letter-spacing:.08em;color:var(--teal);
+  border:1px solid var(--teal);border-radius:999px;padding:3px 10px;margin-bottom:18px}
+h1{font-size:30px;line-height:1.3;margin:0 0 10px}
+.sub{color:var(--ink-soft);margin:0 0 8px}
+.meta{color:var(--muted);font-size:14px;margin:0 0 36px}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:20px 22px;margin-bottom:14px;text-decoration:none;color:inherit;
+  box-shadow:0 1px 2px rgba(27,36,48,.05),0 8px 24px rgba(27,36,48,.05);transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--teal);transform:translateY(-1px)}
+.card h2{font-size:17px;margin:0 0 6px;color:var(--teal)}
+.card p{margin:0;color:var(--ink-soft);font-size:14.5px}
+.card .constraints{margin-top:10px;font-size:13px;color:var(--muted)}
+.note{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-top:28px;font-size:14px;color:var(--ink-soft)}
+.note b{color:var(--ink)}
+code{background:#f1eee6;border-radius:5px;padding:1px 6px;font-size:13px}
+footer{margin-top:36px;color:var(--muted);font-size:13px}
+a{color:var(--teal)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="tag">제주 AI·빅데이터 활용 AI Agent 개발 챌린지 출품작</span>
+  <h1>빈틈(BinTeum) — 제주 여행의 빈 시간을 찾아주는 혼잡 회피 Agent</h1>
+  <p class="sub">"지금 이 시각, 어디가 한산한가"를 읍면동 실측 유동인구로 계산하고,
+  아이·부모님·귀가시간 같은 제약을 지키면서 남은 하루 동선을 3안으로 다시 짜줍니다.</p>
+  <p class="meta">이 페이지는 로컬 실행 결과 리포트 3건입니다 · 2026-11-18 생성 · 응답 246~276ms</p>
+
+  <a class="card" href="samples/run-20261118-220832-3f8600.html">
+    <h2>① 성산 · 아이 동반 · 18시 복귀</h2>
+    <p>"성산에 있는데 지금 너무 붐벼. 애가 3살이라 오후엔 실내 위주로, 6시까지 숙소 복귀"</p>
+    <div class="constraints">위치 성산읍 · 종료 18:00 · 동행 family_kid · 이동 car · 실내 선호</div>
+  </a>
+
+  <a class="card" href="samples/run-20261118-220832-7ecb6d.html">
+    <h2>② 애월 · 버스 · 예산 3만원 · 야경</h2>
+    <p>"애월에 있는데 버스로 다닐 거고 예산 3만원, 9시까지 야경 보고 싶어"</p>
+    <div class="constraints">위치 애월읍 · 종료 21:00 · 동행 couple · 이동 bus · 예산 30,000원</div>
+  </a>
+
+  <a class="card" href="samples/run-20261118-220832-f4c04d.html">
+    <h2>③ 중문 · 부모님 동반 · 짧은 이동 · 17시</h2>
+    <p>"중문인데 부모님 모시고 있어요. 걷기 힘드셔서 이동 짧게, 5시까지"</p>
+    <div class="constraints">위치 중문동 · 종료 17:00 · 동행 with_parents · 이동 car</div>
+  </a>
+
+  <div class="note">
+    <b>직접 실행하기</b> — 이 저장소의 <a href="https://github.com/gigaminkyu/portfolio/tree/main/projects/binteum">projects/binteum</a>에서
+    <code>bash run.sh</code>를 실행하면 <code>http://127.0.0.1:8000</code>에서 같은 화면을 직접 조작할 수 있습니다(파이썬 3.10 이상, 외부 패키지 0개).
+    각 리포트는 서버·인터넷 없이 열리는 단일 HTML입니다.
+  </div>
+
+  <footer>
+    데이터: 제주데이터허브 Open API 583 읍면동 내국인 유동인구 실측 수집분(2026-06-24~08-19, 읍면동 43개) +
+    591·614·579·618은 프로젝트 미연결로 스키마를 재현한 합성 스냅샷. 화면 배지와 결과 JSON에 출처가 표시됩니다.<br>
+    대회 출품: 개인 참가 <code>gigaminkyu</code>, 2026-11-18 DAKER 최종 제출.
+  </footer>
+</div>
+</body>
+</html>
